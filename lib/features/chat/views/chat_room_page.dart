@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/chat_viewmodel.dart';
-import '../../../../core/services/supabase_service.dart'; // Needed to check "Is this my message?"
+import '../../../core/mock/mock_data.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String roomId;
+  final String roomName;
   
-  const ChatRoomPage({super.key, required this.roomId});
+  const ChatRoomPage({super.key, required this.roomId, this.roomName = 'Conversation'});
 
   @override
   State<ChatRoomPage> createState() => _ChatRoomPageState();
@@ -23,19 +24,15 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    // 1. Access the ViewModel
     final viewModel = context.read<ChatViewModel>();
-    // 2. Get current User ID to decide Left vs Right alignment
-    final currentUserId = SupabaseService.client.auth.currentUser?.id;
+    final currentUserId = MockData.currentUser.id;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Conversation")),
+      appBar: AppBar(title: Text(widget.roomName)),
       body: Column(
         children: [
-          // === MESSAGE LIST (REALTIME STREAM) ===
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              // Asking ViewModel for the stream
               stream: viewModel.getMessages(widget.roomId),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -52,7 +49,8 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 }
 
                 return ListView.builder(
-                  reverse: true, // Important: Newest messages at the bottom
+                  reverse: true,
+                  padding: const EdgeInsets.all(8),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
                     final msg = messages[index];
@@ -63,8 +61,11 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                       child: Container(
                         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
                         padding: const EdgeInsets.all(12),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.7,
+                        ),
                         decoration: BoxDecoration(
-                          color: isMe ? Colors.blue : Colors.grey[300],
+                          color: isMe ? Colors.deepPurple : Colors.grey[300],
                           borderRadius: BorderRadius.only(
                             topLeft: const Radius.circular(12),
                             topRight: const Radius.circular(12),
@@ -83,36 +84,50 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
               },
             ),
           ),
-
-          // === INPUT FIELD ===
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _msgController,
-                    decoration: const InputDecoration(
-                      hintText: "Type a message...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.blue),
-                  onPressed: () {
-                    final text = _msgController.text;
-                    if (text.isNotEmpty) {
-                      viewModel.sendMessage(widget.roomId, text);
-                      _msgController.clear();
-                    }
-                  },
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
                 ),
               ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _msgController,
+                      decoration: InputDecoration(
+                        hintText: "Type a message...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      ),
+                      maxLines: null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  CircleAvatar(
+                    backgroundColor: Colors.deepPurple,
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white),
+                      onPressed: () {
+                        final text = _msgController.text;
+                        if (text.isNotEmpty) {
+                          viewModel.sendMessage(widget.roomId, text);
+                          _msgController.clear();
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],

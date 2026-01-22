@@ -1,24 +1,49 @@
 import 'package:flutter/material.dart';
-import '../data/auth_repository.dart';
+import '../data/mock_auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final AuthRepository _repo = AuthRepository();
+  final MockAuthRepository _repo = MockAuthRepository();
   bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  bool _isLoggedIn = false;
 
-  Future<void> login(String email, String password, BuildContext context) async {
+  bool get isLoading => _isLoading;
+  bool get isLoggedIn => _isLoggedIn;
+
+  Future<bool> login(String email, String password) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       await _repo.login(email, password);
-      // Navigation is handled in main.dart via Auth State changes, 
-      // or you can return true here to let View handle navigation.
+      _isLoggedIn = true;
+      return true;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<bool> register(String email, String password, String username) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _repo.register(email, password, username);
+      _isLoggedIn = true;
+      return true;
+    } catch (e) {
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> logout() async {
+    await _repo.logout();
+    _isLoggedIn = false;
+    notifyListeners();
   }
 }
