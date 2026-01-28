@@ -1,12 +1,16 @@
 // lib/features/profile/views/profile_page.dart
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
-import '../../../core/widgets/custom_image_view.dart';
-import '../../feed/data/models/feed_model.dart';
-import '../../auth/data/models/user_model.dart';
+import '../../../core/services/supabase_service.dart';
 import '../viewmodels/profile_viewmodel.dart';
 import '../data/repositories/profile_repository_impl.dart';
 import '../data/datasources/profile_mock_data_source.dart';
+import '../data/datasources/profile_remote_data_source.dart';
+import '../../auth/data/repositories/auth_repository.dart';
+import 'widgets/profile_card.dart';
+import 'widgets/profile_post_item.dart';
+import 'widgets/profile_loading_state.dart';
+import 'widgets/profile_error_state.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -14,13 +18,17 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get current logged-in user ID from Supabase
+    final currentUserId = SupabaseService.client.auth.currentUser?.id ?? 'user1';
+    
     return ChangeNotifierProvider(
       create: (_) => ProfileViewModel(
         repository: ProfileRepositoryImpl(
+          remoteDataSource: ProfileRemoteDataSourceImpl(),
           mockDataSource: ProfileMockDataSourceImpl(),
-          useMockData: true,
+          useMockData: false, // Set to false to use real Supabase data
         ),
-        userId: 'user1',
+        userId: currentUserId,
       )..loadProfile(),
       child: const _ProfilePageContent(),
     );
@@ -37,71 +45,49 @@ class _ProfilePageContent extends StatelessWidget {
       body: SafeArea(
         child: Consumer<ProfileViewModel>(
           builder: (context, viewModel, _) {
+            // Loading state
             if (viewModel.isLoading) {
-              return Center(
-                child: CircularProgressIndicator(
-                  color: appTheme.blue_900,
-                ),
-              );
+              return const ProfileLoadingState();
             }
 
+            // Error state
             if (viewModel.status == ProfileStatus.error) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: appTheme.colorFFFF00),
-                    SizedBox(height: 16),
-                    Text(
-                      viewModel.errorMessage ?? 'Something went wrong',
-                      style: TextStyleHelper.instance.body15MediumInter,
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => viewModel.loadProfile(),
-                      child: Text('Retry'),
-                    ),
-                  ],
-                ),
+              return ProfileErrorState(
+                errorMessage: viewModel.errorMessage,
+                onRetry: () => viewModel.loadProfile(),
               );
             }
 
+            // Success state
             final user = viewModel.user;
             final stats = viewModel.stats;
             if (user == null || stats == null) return SizedBox();
 
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(height: 20),
-                  Text(
-                    'Profile',
-                    style: TextStyleHelper.instance.display40RegularSourceSerifPro.copyWith(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      color: appTheme.blue_900,
+            return RefreshIndicator(
+              onRefresh: () => viewModel.refresh(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 20),
+                    _buildHeader(),
+                    SizedBox(height: 20),
+                    ProfileCard(
+                      user: user,
+                      stats: stats,
+                      onEditProfile: () => _handleEditProfile(context),
+                      onSettings: () => _handleSettings(context),
+                      onLogout: () => _handleLogout(context),
                     ),
-                  ),
-                  SizedBox(height: 20),
-                  _buildProfileCard(context, user, stats),
-                  SizedBox(height: 30),
-                  Text(
-                    'Your Posts (${viewModel.userPosts.length})',
-                    style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
-                      fontSize: 20,
-                      color: appTheme.blue_light,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  ...viewModel.userPosts.map((post) => Padding(
-                    padding: EdgeInsets.only(bottom: 20),
-                    child: _buildPostItem(context, post),
-                  )),
-                  SizedBox(height: 20),
-                ],
+                    SizedBox(height: 30),
+                    _buildPostsHeader(viewModel.userPosts.length),
+                    SizedBox(height: 20),
+                    ..._buildPostsList(context, viewModel.userPosts),
+                    SizedBox(height: 20),
+                  ],
+                ),
               ),
             );
           },
@@ -110,184 +96,86 @@ class _ProfilePageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileCard(BuildContext context, User user, dynamic stats) {
-    return Container(
-      padding: EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: appTheme.white_A700,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: appTheme.greyCustom.withOpacity(0.1),
-            spreadRadius: 5,
-            blurRadius: 15,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 70,
-                height: 70,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: appTheme.blue_gray_100,
-                ),
-                child: user.avatarUrl != null
-                    ? ClipOval(
-                        child: CustomImageView(
-                          imagePath: user.avatarUrl,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Icon(
-                        Icons.person,
-                        size: 40,
-                        color: appTheme.greyCustom,
-                      ),
-              ),
-              SizedBox(width: 15),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.name,
-                      style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      user.email,
-                      style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                        color: appTheme.greyCustom,
-                      ),
-                    ),
-                    if (user.bio != null) ...[
-                      SizedBox(height: 8),
-                      Text(
-                        user.bio!,
-                        style: TextStyleHelper.instance.body12MediumRoboto,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Divider(height: 40, color: appTheme.blue_gray_100),
-          _buildMenuTile(Icons.person_outline, 'Edit Profile'),
-          _buildMenuTile(Icons.settings_outlined, 'Settings'),
-          _buildMenuTile(Icons.logout, 'Log Out', isDestructive: true),
-        ],
+  Widget _buildHeader() {
+    return Text(
+      'Profile',
+      style: TextStyleHelper.instance.display40RegularSourceSerifPro.copyWith(
+        fontSize: 28,
+        fontWeight: FontWeight.w700,
+        color: appTheme.blue_900,
       ),
     );
   }
 
-  Widget _buildMenuTile(IconData icon, String title, {bool isDestructive = false}) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Icon(
-        icon,
-        color: isDestructive ? appTheme.colorFFFF00 : appTheme.gray_900,
+  Widget _buildPostsHeader(int postCount) {
+    return Text(
+      'Your Posts ($postCount)',
+      style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+        fontSize: 20,
+        color: appTheme.blue_light,
       ),
-      title: Text(
-        title,
-        style: TextStyleHelper.instance.body15MediumInter.copyWith(
-          color: isDestructive ? appTheme.colorFFFF00 : appTheme.gray_900,
-        ),
-      ),
-      trailing: Icon(
-        Icons.arrow_forward_ios,
-        size: 16,
-        color: appTheme.greyCustom,
-      ),
-      onTap: () {},
     );
   }
 
-  Widget _buildPostItem(BuildContext context, FeedPost post) {
-    return GestureDetector(
-      onTap: () {
-        context.push('/main/post/${post.id}');
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  post.title,
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
-                    fontSize: 16,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 8),
-                Text(
-                  post.content,
-                  style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                    fontSize: 13,
-                    color: appTheme.greyCustom,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                SizedBox(height: 12),
-                Row(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: appTheme.blue_900.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        post.category,
-                        style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                          color: appTheme.blue_900,
-                        ),
-                      ),
-                    ),
-                    Spacer(),
-                    Text(
-                      '${post.commentCount}',
-                      style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                        color: appTheme.greyCustom,
-                      ),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(
-                      Icons.chat_bubble_outline,
-                      size: 14,
-                      color: appTheme.greyCustom,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+  List<Widget> _buildPostsList(BuildContext context, List<dynamic> posts) {
+    return posts.map((post) => Padding(
+      padding: EdgeInsets.only(bottom: 20),
+      child: ProfilePostItem(
+        post: post,
+        onTap: () => context.push('/main/post/${post.id}', extra: post),
+      ),
+    )).toList();
+  }
+
+  void _handleEditProfile(BuildContext context) {
+    // TODO: Navigate to edit profile screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Edit Profile - Coming Soon')),
+    );
+  }
+
+  void _handleSettings(BuildContext context) {
+    // TODO: Navigate to settings screen
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Settings - Coming Soon')),
+    );
+  }
+
+  void _handleLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Logout'),
+        content: Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
           ),
-          SizedBox(width: 15),
-          Expanded(
-            flex: 2,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: CustomImageView(
-                imagePath: post.imageUrl ?? ImageConstant.imgPlaceholder,
-                fit: BoxFit.cover,
-                height: 100,
-              ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: appTheme.colorFFFF00,
             ),
+            child: Text('Logout'),
           ),
         ],
       ),
     );
+
+    if (confirm == true && context.mounted) {
+      try {
+        await AuthRepository().logout();
+        if (context.mounted) {
+          context.go('/login');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Logout failed: $e')),
+          );
+        }
+      }
+    }
   }
 }

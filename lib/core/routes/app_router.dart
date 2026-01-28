@@ -13,7 +13,7 @@ import '../../features/feed/data/models/feed_model.dart';
 class AppRouter {
 
   // Development flag
-  static const bool _bypassAuth = true;
+  static const bool _bypassAuth = false;
 
   static final GoRouter router = GoRouter(
     

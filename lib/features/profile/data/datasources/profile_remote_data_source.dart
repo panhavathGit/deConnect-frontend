@@ -1,8 +1,5 @@
 // // lib/features/profile/data/datasources/profile_remote_data_source.dart
-// import '../../../../core/services/supabase_service.dart';
-// import '../../../auth/data/models/user_model.dart';
-// import '../../../feed/data/models/feed_model.dart';
-// import '../models/profile_status.dart';
+
 
 // abstract class ProfileRemoteDataSource {
 //   Future<User> getUserProfile(String userId);
@@ -33,13 +30,15 @@
 //   Future<ProfileStats> getProfileStats(String userId) async {
 //     try {
 //       // Get posts count from posts table
-//       final postsCount = await _supabase
+//       final response = await _supabase
 //           .from('posts')
-//           .select('id', const FetchOptions(count: CountOption.exact))
+//           .select()
 //           .eq('user_id', userId);
       
+//       final postsCount = (response as List).length;
+      
 //       return ProfileStats(
-//         postsCount: postsCount.count ?? 0,
+//         postsCount: postsCount,
 //       );
 //     } catch (e) {
 //       throw Exception('Failed to fetch profile stats: $e');
@@ -76,83 +75,135 @@
 //   }
 // }
 
-
+// lib/features/profile/data/datasources/profile_remote_data_source.dart
 // lib/features/profile/data/datasources/profile_remote_data_source.dart
 import '../../../../core/services/supabase_service.dart';
-import '../../../auth/data/models/user_model.dart';
+import '../../../auth/data/models/user_model.dart' as UserModel;
 import '../../../feed/data/models/feed_model.dart';
 import '../models/profile_status.dart';
 
 abstract class ProfileRemoteDataSource {
-  Future<User> getUserProfile(String userId);
+  Future<UserModel.User> getUserProfile(String userId);
   Future<ProfileStats> getProfileStats(String userId);
   Future<List<FeedPost>> getUserPosts(String userId);
-  Future<void> updateProfile(User user);
+  Future<void> updateProfile(UserModel.User user);
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   final _supabase = SupabaseService.client;
 
   @override
-  Future<User> getUserProfile(String userId) async {
+  Future<UserModel.User> getUserProfile(String userId) async {
     try {
+      print('📥 Fetching user profile from Supabase: $userId');
+      
       final response = await _supabase
-          .from('users')
+          .from('profiles')
           .select()
           .eq('id', userId)
           .single();
+
+      print('✅ Profile data received: $response');
       
-      return User.fromJson(response);
+      // Get email from auth user
+      final authUser = _supabase.auth.currentUser;
+      
+      return UserModel.User(
+        id: response['id'],
+        name: response['username'] ?? 'Unknown',
+        email: authUser?.email ?? '',
+        avatarUrl: response['avatar_url'],
+        bio: response['bio'],
+        createdAt: DateTime.parse(response['created_at']),
+      );
     } catch (e) {
-      throw Exception('Failed to fetch user profile: $e');
+      print('❌ Error fetching profile: $e');
+      rethrow;
     }
   }
 
   @override
   Future<ProfileStats> getProfileStats(String userId) async {
     try {
-      // Get posts count from posts table
+      print('📊 Fetching profile stats for: $userId');
+      
+      // Count user posts - simply get the list and count it
       final response = await _supabase
           .from('posts')
-          .select()
+          .select('id')
           .eq('user_id', userId);
-      
-      final postsCount = (response as List).length;
+
+      final count = (response as List).length;
+      print('✅ User has $count posts');
       
       return ProfileStats(
-        postsCount: postsCount,
+        postsCount: count,
       );
     } catch (e) {
-      throw Exception('Failed to fetch profile stats: $e');
+      print('❌ Error fetching stats: $e');
+      // Return default stats on error
+      return ProfileStats(
+        postsCount: 0,
+      );
     }
   }
 
   @override
   Future<List<FeedPost>> getUserPosts(String userId) async {
     try {
+      print('📝 Fetching user posts from Supabase: $userId');
+      
       final response = await _supabase
           .from('posts')
-          .select()
+          .select('''
+            *,
+            profiles:user_id (
+              username,
+              avatar_url
+            )
+          ''')
           .eq('user_id', userId)
           .order('created_at', ascending: false);
-      
-      return (response as List)
-          .map((json) => FeedPost.fromJson(json))
-          .toList();
+
+      print('✅ Fetched ${response.length} posts');
+
+      return (response as List).map((post) {
+        final profile = post['profiles'];
+        return FeedPost(
+          id: post['id'],
+          title: post['title'] ?? '',
+          content: post['content'] ?? '',
+          userId: post['user_id'],
+          category: post['category'] ?? 'General',
+          authorName: profile?['username'] ?? 'Unknown',
+          authorAvatar: profile?['avatar_url'],
+          createdAt: DateTime.parse(post['created_at']),
+          imageUrl: post['image_url'],
+          commentCount: post['comment_count'] ?? 0,
+        );
+      }).toList();
     } catch (e) {
-      throw Exception('Failed to fetch user posts: $e');
+      print('❌ Error fetching user posts: $e');
+      rethrow;
     }
   }
 
   @override
-  Future<void> updateProfile(User user) async {
+  Future<void> updateProfile(UserModel.User user) async {
     try {
-      await _supabase
-          .from('users')
-          .update(user.toJson())
-          .eq('id', user.id);
+      print('💾 Updating profile in Supabase: ${user.id}');
+      
+      await _supabase.from('profiles').update({
+        'username': user.name,
+        'avatar_url': user.avatarUrl,
+        'bio': user.bio,
+        'updated_at': DateTime.now().toIso8601String(),
+      }).eq('id', user.id);
+
+      print('✅ Profile updated successfully');
     } catch (e) {
-      throw Exception('Failed to update profile: $e');
+      print('❌ Error updating profile: $e');
+      rethrow;
     }
   }
 }

@@ -118,13 +118,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       //         provider.onLoginPressed(context, _formKey);
                       //       },
                       // In the login button:
-                      onPressed: () {
-                        // TODO: Implement provider-based authentication later
-                        // For now, navigate directly to feed page for UI testing
-                        if (_formKey.currentState?.validate() ?? false) {
-                          context.go('/main');
-                        }
-                      },
+
+                      // onPressed: () {
+                      //   // TODO: Implement provider-based authentication later
+                      //   // For now, navigate directly to feed page for UI testing
+                      //   if (_formKey.currentState?.validate() ?? false) {
+                      //     context.go('/main');
+                      //   }
+                      // },
+
+                      onPressed: provider.isLoading
+                          ? null
+                          : () {
+                              provider.onLoginPressed(context, _formKey);
+                            },
                       
                     ),
                     SizedBox(height: 28),

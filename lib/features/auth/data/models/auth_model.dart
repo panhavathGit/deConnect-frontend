@@ -1,13 +1,14 @@
 class AuthModel {
-    AuthModel({this.email, this.password, this.isLoggedIn, this.rememberMe}) {
+    AuthModel({this.email, this.password, this.username ,this.isLoggedIn}) {
     email = email ?? "";
     password = password ?? "";
+    username = username ?? "";
     isLoggedIn = isLoggedIn ?? false;
-    rememberMe = rememberMe ?? false;
   }
 
   String? email;
   String? password;
+  String? username;
   bool? isLoggedIn;
-  bool? rememberMe;
+
 }

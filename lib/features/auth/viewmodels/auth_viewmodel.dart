@@ -1,31 +1,12 @@
 import 'package:flutter/material.dart';
 import '../data/repositories/auth_repository.dart';
-
-// class AuthViewModel extends ChangeNotifier {
-//   final AuthRepository _repo = AuthRepository();
-//   bool _isLoading = false;
-//   bool get isLoading => _isLoading;
-
-//   Future<void> login(String email, String password, BuildContext context) async {
-//     _isLoading = true;
-//     notifyListeners();
-
-//     try {
-//       await _repo.login(email, password);
-//       // Navigation is handled in main.dart via Auth State changes, 
-//       // or you can return true here to let View handle navigation.
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-//     } finally {
-//       _isLoading = false;
-//       notifyListeners();
-//     }
-//   }
-// }
-
 import '../../../core/app_export.dart';
-class AuthViewModel extends ChangeNotifier{
-    AuthModel loginModel = AuthModel();
+import 'package:go_router/go_router.dart';
+
+class AuthViewModel extends ChangeNotifier {
+  final AuthRepository _authRepository = AuthRepository();
+  
+  AuthModel loginModel = AuthModel();
 
   TextEditingController emailController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
@@ -97,37 +78,52 @@ class AuthViewModel extends ChangeNotifier{
     isLoading = true;
     notifyListeners();
 
-    // Simulate login process
-    await Future.delayed(Duration(seconds: 2));
+    try {
+      // Call Supabase login
+      final response = await _authRepository.login(
+        emailController.text.trim(),
+        passwordController.text,
+      );
 
-    // Update login model
-    loginModel.email = emailController.text;
-    loginModel.password = passwordController.text;
-    loginModel.isLoggedIn = true;
+      if (response.user != null) {
+        // Update login model
+        loginModel.email = emailController.text;
+        loginModel.isLoggedIn = true;
+        loginModel.username = response.user?.userMetadata?['username'] ?? '';
 
-    isLoading = false;
-    isSuccess = true;
-    notifyListeners();
+        isSuccess = true;
 
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Login successful!'),
-        backgroundColor: appTheme.greenCustom,
-      ),
-    );
+        // Show success message
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Login successful!'),
+              backgroundColor: appTheme.greenCustom,
+            ),
+          );
 
-    // Clear form
-    emailController.clear();
-    passwordController.clear();
+          // Clear form
+          emailController.clear();
+          passwordController.clear();
 
-    // Navigate to the next screen (based on navigateTo: "18:575")
-    // Since no specific route is provided, we'll simulate navigation
-    await Future.delayed(Duration(milliseconds: 500));
-
-    // Reset success state
-    isSuccess = false;
-    notifyListeners();
+          // Navigate to main feed
+          context.go('/main');
+        }
+      }
+    } catch (e) {
+      // Handle errors
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Login failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
   }
 
   void onSignUpPressed() {
@@ -136,4 +132,3 @@ class AuthViewModel extends ChangeNotifier{
     print('Navigate to Sign Up screen');
   }
 }
-
