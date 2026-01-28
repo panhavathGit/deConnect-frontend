@@ -112,6 +112,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         id: response['id'],
         name: response['username'] ?? 'Unknown',
         email: authUser?.email ?? '',
+        firstName: response['first_name'],      // Add
+        lastName: response['last_name'],        // Add
+        gender: response['gender'],             // Add
         avatarUrl: response['avatar_url'],
         bio: response['bio'],
         createdAt: DateTime.parse(response['created_at']),
@@ -121,7 +124,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       rethrow;
     }
   }
-
+  
   @override
   Future<ProfileStats> getProfileStats(String userId) async {
     try {

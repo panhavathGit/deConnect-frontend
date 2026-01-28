@@ -9,6 +9,7 @@ import '../services/supabase_service.dart';
 import '../../features/feed/presentation/views/post_detail_page.dart';
 import '../../features/feed/presentation/views/comments_page.dart';
 import '../../features/feed/data/models/feed_model.dart';
+import '../../features/auth/views/register_screen.dart';
 
 class AppRouter {
 
@@ -27,16 +28,30 @@ class AppRouter {
 
       if(_bypassAuth) return null;
 
+      // final isLoggedIn = SupabaseService.client.auth.currentUser != null;
+      // final isGoingToLogin = state.matchedLocation == '/login';
+
+      // // If user is not logged in and not going to login, redirect to login
+      // if (!isLoggedIn && !isGoingToLogin) {
+      //   return '/login';
+      // }
+
+      // // If user is logged in and going to login, redirect to main
+      // if (isLoggedIn && isGoingToLogin) {
+      //   return '/main';
+      // }
+
       final isLoggedIn = SupabaseService.client.auth.currentUser != null;
       final isGoingToLogin = state.matchedLocation == '/login';
+      final isGoingToRegister = state.matchedLocation == '/register';
 
-      // If user is not logged in and not going to login, redirect to login
-      if (!isLoggedIn && !isGoingToLogin) {
+      // If user is not logged in and not going to auth pages, redirect to login
+      if (!isLoggedIn && !isGoingToLogin && !isGoingToRegister) {
         return '/login';
       }
 
-      // If user is logged in and going to login, redirect to main
-      if (isLoggedIn && isGoingToLogin) {
+      // If user is logged in and going to auth pages, redirect to main
+      if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
         return '/main';
       }
 
@@ -51,6 +66,13 @@ class AppRouter {
         name: 'login',
         pageBuilder: (context, state) => NoTransitionPage(
           child: LoginScreen.builder(context),
+        ),
+      ),
+      GoRoute(
+        path: '/register',
+        name: 'register',
+        pageBuilder: (context, state) => NoTransitionPage(
+          child: RegisterScreen.builder(context),
         ),
       ),
 
