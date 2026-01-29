@@ -123,8 +123,18 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     try {
       print('💾 Updating profile in Supabase: ${user.id}');
       
+      // await _supabase.from('profiles').update({
+      //   'username': user.name,
+      //   'avatar_url': user.avatarUrl,
+      //   'bio': user.bio,
+      //   'updated_at': DateTime.now().toIso8601String(),
+      // }).eq('id', user.id);
+
       await _supabase.from('profiles').update({
         'username': user.name,
+        'first_name': user.firstName,
+        'last_name': user.lastName,
+        'gender': user.gender,
         'avatar_url': user.avatarUrl,
         'bio': user.bio,
         'updated_at': DateTime.now().toIso8601String(),

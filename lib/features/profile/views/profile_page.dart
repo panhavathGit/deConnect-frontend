@@ -12,6 +12,7 @@ import 'widgets/profile_post_item.dart';
 import 'widgets/profile_loading_state.dart';
 import 'widgets/profile_error_state.dart';
 import 'package:go_router/go_router.dart';
+import '../../profile/views/edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -127,11 +128,34 @@ class _ProfilePageContent extends StatelessWidget {
     )).toList();
   }
 
+  // void _handleEditProfile(BuildContext context) {
+  //   // TODO: Navigate to edit profile screen
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text('Edit Profile - Coming Soon')),
+  //   );
+  // }
+
+  // The EditProfilePage can't access ProfileViewModel because it's in a different route context. You need to pass the viewModel directly.
+  // void _handleEditProfile(BuildContext context) {
+  //   final viewModel = context.read<ProfileViewModel>();
+  //   if (viewModel.user != null) {
+  //     context.push('/profile/edit-profile', extra: viewModel.user);
+  //   }
+  // }
+
   void _handleEditProfile(BuildContext context) {
-    // TODO: Navigate to edit profile screen
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Edit Profile - Coming Soon')),
-    );
+    final viewModel = context.read<ProfileViewModel>();
+    if (viewModel.user != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EditProfilePage(
+            user: viewModel.user!,
+            viewModel: viewModel,
+          ),
+        ),
+      );
+    }
   }
 
   void _handleSettings(BuildContext context) {

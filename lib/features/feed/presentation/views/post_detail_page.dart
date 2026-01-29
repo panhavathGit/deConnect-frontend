@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/app_export.dart';
 import '../../../../core/widgets/custom_image_view.dart';
 import '../../data/models/feed_model.dart';
-import 'package:intl/intl.dart';
 
 class PostDetailPage extends StatefulWidget {
   final FeedPost post;

@@ -30,7 +30,7 @@ Future<void> main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
-           ChangeNotifierProvider(create: (_) => UserInfoViewModel()), 
+        ChangeNotifierProvider(create: (_) => UserInfoViewModel()), 
         ChangeNotifierProvider(
           create: (_) => FeedViewModel(repository: feedRepository),
         ),
