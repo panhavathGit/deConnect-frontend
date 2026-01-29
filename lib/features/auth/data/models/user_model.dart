@@ -3,9 +3,9 @@ class User {
   final String id;
   final String name;
   final String email;
-  final String? firstName;      // Add
-  final String? lastName;       // Add
-  final String? gender;         // Add
+  final String? firstName;     
+  final String? lastName;      
+  final String? gender;        
   final String? avatarUrl;
   final String? bio;
   final DateTime createdAt;
@@ -14,9 +14,9 @@ class User {
     required this.id,
     required this.name,
     required this.email,
-    this.firstName,               // Add
-    this.lastName,                // Add
-    this.gender,                  // Add
+    this.firstName,               
+    this.lastName,                
+    this.gender,                 
     this.avatarUrl,
     this.bio,
     required this.createdAt,
@@ -27,9 +27,9 @@ class User {
       id: json['id'],
       name: json['name'] ?? json['username'] ?? 'Unknown',
       email: json['email'],
-      firstName: json['first_name'],     // Add
-      lastName: json['last_name'],       // Add
-      gender: json['gender'],            // Add
+      firstName: json['first_name'],    
+      lastName: json['last_name'],      
+      gender: json['gender'],           
       avatarUrl: json['avatar_url'],
       bio: json['bio'],
       createdAt: json['created_at'] != null
@@ -43,9 +43,9 @@ class User {
       'id': id,
       'name': name,
       'email': email,
-      'first_name': firstName,         // Add
-      'last_name': lastName,           // Add
-      'gender': gender,                // Add
+      'first_name': firstName,        
+      'last_name': lastName,          
+      'gender': gender,               
       'avatar_url': avatarUrl,
       'bio': bio,
       'created_at': createdAt.toIso8601String(),

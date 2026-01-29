@@ -10,7 +10,7 @@ import '../../features/feed/presentation/views/post_detail_page.dart';
 import '../../features/feed/presentation/views/comments_page.dart';
 import '../../features/feed/data/models/feed_model.dart';
 import '../../features/auth/views/register_screen.dart';
-
+import '../../features/feed/presentation/views/create_post_page.dart';
 class AppRouter {
 
   // Development flag
@@ -74,6 +74,13 @@ class AppRouter {
         pageBuilder: (context, state) => NoTransitionPage(
           child: RegisterScreen.builder(context),
         ),
+      ),
+
+      // Create Post Route (standalone, outside StatefulShellRoute)
+      GoRoute(
+        path: '/create-post',
+        name: 'createPost',
+        builder: (context, state) => CreatePostPage.builder(context),
       ),
 
       // Main App with Bottom Navigation

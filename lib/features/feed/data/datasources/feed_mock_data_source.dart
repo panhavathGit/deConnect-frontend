@@ -16,8 +16,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user1',
       imageUrl: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800',
       authorName: 'Alice Jane',
-      commentCount: 1200,
-      category: 'Technologies',
+      tags: ['Technologies', 'Travel'],
       createdAt: DateTime.now().subtract(Duration(hours: 2)),
     ),
     FeedPost(
@@ -27,8 +26,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user2',
       imageUrl: 'https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=800',
       authorName: 'John Smith',
-      commentCount: 856,
-      category: 'Business',
+      tags: ['Business', 'Entertainment'],
       createdAt: DateTime.now().subtract(Duration(hours: 5)),
     ),
     FeedPost(
@@ -38,8 +36,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user3',
       imageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800',
       authorName: 'Sarah Chen',
-      commentCount: 2340,
-      category: 'Technologies',
+      tags: ['Technologies', 'Business'],
       createdAt: DateTime.now().subtract(Duration(hours: 8)),
     ),
     FeedPost(
@@ -49,8 +46,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user4',
       imageUrl: 'https://images.unsplash.com/photo-1541872703-74c36f90c83d?w=800',
       authorName: 'David Wong',
-      commentCount: 567,
-      category: 'Politics',
+      tags: ['Politics'],
       createdAt: DateTime.now().subtract(Duration(hours: 12)),
     ),
     FeedPost(
@@ -60,8 +56,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user5',
       imageUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800',
       authorName: 'Emily Taylor',
-      commentCount: 1450,
-      category: 'Business',
+      tags: ['Business'],
       createdAt: DateTime.now().subtract(Duration(days: 1)),
     ),
     FeedPost(
@@ -71,8 +66,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
       userId: 'user6',
       imageUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800',
       authorName: 'Michael Brown',
-      commentCount: 923,
-      category: 'Technologies',
+      tags: ['Technologies', 'Travel'],
       createdAt: DateTime.now().subtract(Duration(days: 2)),
     ),
   ];
@@ -83,7 +77,7 @@ class FeedMockDataSourceImpl implements FeedMockDataSource {
     await Future.delayed(Duration(milliseconds: 800));
 
     if (category != null && category != 'All') {
-      return _mockPosts.where((post) => post.category == category).toList();
+      return _mockPosts.where((post) => post.tags.contains(category)).toList();
     }
     return _mockPosts;
   }

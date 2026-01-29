@@ -31,8 +31,7 @@ class ProfileMockDataSourceImpl implements ProfileMockDataSource {
       userId: 'user1',
       imageUrl: 'https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=800',
       authorName: 'Alice Jane',
-      commentCount: 1200,
-      category: 'Technologies',
+      tags: ['Technologies', 'Travel'],
       createdAt: DateTime.now().subtract(Duration(hours: 2)),
     ),
     FeedPost(
@@ -42,8 +41,7 @@ class ProfileMockDataSourceImpl implements ProfileMockDataSource {
       userId: 'user1',
       imageUrl: 'https://images.unsplash.com/photo-1528181304800-259b08848526?w=800',
       authorName: 'Alice Jane',
-      commentCount: 856,
-      category: 'Business',
+      tags: ['Business', 'Travel'],
       createdAt: DateTime.now().subtract(Duration(days: 3)),
     ),
     FeedPost(
@@ -53,8 +51,7 @@ class ProfileMockDataSourceImpl implements ProfileMockDataSource {
       userId: 'user1',
       imageUrl: 'https://images.unsplash.com/photo-1484788984921-03950022c9ef?w=800',
       authorName: 'Alice Jane',
-      commentCount: 2100,
-      category: 'Technologies',
+      tags: ['Technologies'],
       createdAt: DateTime.now().subtract(Duration(days: 7)),
     ),
   ];

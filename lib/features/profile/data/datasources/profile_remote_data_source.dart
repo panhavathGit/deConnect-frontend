@@ -1,82 +1,3 @@
-// // lib/features/profile/data/datasources/profile_remote_data_source.dart
-
-
-// abstract class ProfileRemoteDataSource {
-//   Future<User> getUserProfile(String userId);
-//   Future<ProfileStats> getProfileStats(String userId);
-//   Future<List<FeedPost>> getUserPosts(String userId);
-//   Future<void> updateProfile(User user);
-// }
-
-// class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
-//   final _supabase = SupabaseService.client;
-
-//   @override
-//   Future<User> getUserProfile(String userId) async {
-//     try {
-//       final response = await _supabase
-//           .from('users')
-//           .select()
-//           .eq('id', userId)
-//           .single();
-      
-//       return User.fromJson(response);
-//     } catch (e) {
-//       throw Exception('Failed to fetch user profile: $e');
-//     }
-//   }
-
-//   @override
-//   Future<ProfileStats> getProfileStats(String userId) async {
-//     try {
-//       // Get posts count from posts table
-//       final response = await _supabase
-//           .from('posts')
-//           .select()
-//           .eq('user_id', userId);
-      
-//       final postsCount = (response as List).length;
-      
-//       return ProfileStats(
-//         postsCount: postsCount,
-//       );
-//     } catch (e) {
-//       throw Exception('Failed to fetch profile stats: $e');
-//     }
-//   }
-
-//   @override
-//   Future<List<FeedPost>> getUserPosts(String userId) async {
-//     try {
-//       final response = await _supabase
-//           .from('posts')
-//           .select()
-//           .eq('user_id', userId)
-//           .order('created_at', ascending: false);
-      
-//       return (response as List)
-//           .map((json) => FeedPost.fromJson(json))
-//           .toList();
-//     } catch (e) {
-//       throw Exception('Failed to fetch user posts: $e');
-//     }
-//   }
-
-//   @override
-//   Future<void> updateProfile(User user) async {
-//     try {
-//       await _supabase
-//           .from('users')
-//           .update(user.toJson())
-//           .eq('id', user.id);
-//     } catch (e) {
-//       throw Exception('Failed to update profile: $e');
-//     }
-//   }
-// }
-
-// lib/features/profile/data/datasources/profile_remote_data_source.dart
-// lib/features/profile/data/datasources/profile_remote_data_source.dart
 import '../../../../core/services/supabase_service.dart';
 import '../../../auth/data/models/user_model.dart' as UserModel;
 import '../../../feed/data/models/feed_model.dart';
@@ -172,17 +93,23 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
       return (response as List).map((post) {
         final profile = post['profiles'];
+        // Parse tags array from database
+        List<String> tags = [];
+        if (post['tags'] != null) {
+          tags = List<String>.from(post['tags']);
+        }
+
         return FeedPost(
           id: post['id'],
           title: post['title'] ?? '',
           content: post['content'] ?? '',
           userId: post['user_id'],
-          category: post['category'] ?? 'General',
+          tags: tags,
           authorName: profile?['username'] ?? 'Unknown',
           authorAvatar: profile?['avatar_url'],
           createdAt: DateTime.parse(post['created_at']),
           imageUrl: post['image_url'],
-          commentCount: post['comment_count'] ?? 0,
+      
         );
       }).toList();
     } catch (e) {

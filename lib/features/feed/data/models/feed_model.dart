@@ -1,4 +1,4 @@
-// lib/features/feed/data/feed_model.dart
+// lib/features/feed/data/models/feed_model.dart
 class FeedPost {
   final String id;
   final String title;
@@ -7,8 +7,7 @@ class FeedPost {
   final String? imageUrl;
   final String authorName;
   final String? authorAvatar;
-  final int commentCount;
-  final String category;
+  final List<String> tags;  // Changed from category
   final DateTime createdAt;
 
   FeedPost({
@@ -19,8 +18,7 @@ class FeedPost {
     this.imageUrl,
     required this.authorName,
     this.authorAvatar,
-    required this.commentCount,
-    required this.category,
+    this.tags = const [],  // Changed from category and commentCount
     required this.createdAt,
   });
 
@@ -33,8 +31,7 @@ class FeedPost {
       imageUrl: json['image_url'],
       authorName: json['author_name'] ?? 'Unknown',
       authorAvatar: json['author_avatar'],
-      commentCount: json['comment_count'] ?? 0,
-      category: json['category'] ?? 'General',
+      tags: json['tags'] != null ? List<String>.from(json['tags']) : [],
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at'])
           : DateTime.now(),
@@ -50,9 +47,11 @@ class FeedPost {
       'image_url': imageUrl,
       'author_name': authorName,
       'author_avatar': authorAvatar,
-      'comment_count': commentCount,
-      'category': category,
+      'tags': tags,
       'created_at': createdAt.toIso8601String(),
     };
   }
+
+  // Helper to get first tag or default
+  String get primaryTag => tags.isNotEmpty ? tags.first : 'General';
 }

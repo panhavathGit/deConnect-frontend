@@ -9,6 +9,7 @@ import 'features/feed/data/datasources/feed_remote_data_source.dart';
 import 'features/feed/data/datasources/feed_mock_data_source.dart';
 import 'features/chat/viewmodels/chat_viewmodel.dart';
 import 'features/feed/data/repositories/feed_repository_impl.dart';
+import 'features/feed/presentation/viewmodels/user_info_viewmodel.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,13 +23,14 @@ Future<void> main() async {
   final feedRepository = FeedRepositoryImpl(
     remoteDataSource: feedRemoteDataSource,
     mockDataSource: feedMockDataSource,
-    useMockData: true, // Toggle this when you have real backend
+    useMockData: false, // Toggle this when you have real backend
   );
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthViewModel()),
+           ChangeNotifierProvider(create: (_) => UserInfoViewModel()), 
         ChangeNotifierProvider(
           create: (_) => FeedViewModel(repository: feedRepository),
         ),

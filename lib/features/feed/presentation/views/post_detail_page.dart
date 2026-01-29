@@ -127,13 +127,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       ),
                       SizedBox(width: 16),
                       Icon(Icons.chat_bubble_outline, size: 16, color: appTheme.greyCustom),
-                      SizedBox(width: 4),
-                      Text(
-                        _formatNumber(widget.post.commentCount),
-                        style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                          color: appTheme.greyCustom,
-                        ),
-                      ),
+                      
                     ],
                   ),
                   SizedBox(height: 24),

@@ -66,6 +66,7 @@ class ProfilePostItem extends StatelessWidget {
   Widget _buildPostMetadata() {
     return Row(
       children: [
+        // Show first tag or "General"
         Container(
           padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
@@ -73,29 +74,31 @@ class ProfilePostItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            post.category,
+            post.primaryTag,
             style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
               color: appTheme.blue_900,
             ),
           ),
         ),
         Spacer(),
+        // Removed comment count - you can add other metadata here
+        Icon(
+          Icons.local_offer_outlined,
+          size: 14,
+          color: appTheme.greyCustom,
+        ),
+        SizedBox(width: 4),
         Text(
-          '${post.commentCount}',
+          '${post.tags.length} tags',
           style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
             color: appTheme.greyCustom,
           ),
-        ),
-        SizedBox(width: 4),
-        Icon(
-          Icons.chat_bubble_outline,
-          size: 14,
-          color: appTheme.greyCustom,
         ),
       ],
     );
   }
 
+  
   Widget _buildPostImage() {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
