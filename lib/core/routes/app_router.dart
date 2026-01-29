@@ -110,11 +110,11 @@ class AppRouter {
                   routes: [
                     // Comments Route
                     GoRoute(
-                      path: 'comments',
-                      name: 'comments',
-                      builder: (context, state) {
-                        final post = state.extra as FeedPost;
-                        return CommentsPage(post: post);
+                    path: 'comments',
+                    name: 'comments',
+                    builder: (context, state) {
+                      final post = state.extra as FeedPost;
+                      return CommentsPage.builder(context, post);  // Changed this line
                       },
                     ),
                   ],

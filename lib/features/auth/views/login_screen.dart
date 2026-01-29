@@ -5,7 +5,6 @@ import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/custom_edit_text.dart';
 import '../../../core/widgets/custom_image_view.dart';
 import '../viewmodels/auth_viewmodel.dart';
-import 'package:go_router/go_router.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
