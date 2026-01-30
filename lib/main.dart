@@ -7,7 +7,7 @@ import 'features/auth/viewmodels/auth_viewmodel.dart';
 import 'features/feed/presentation/viewmodels/feed_viewmodel.dart';
 import 'features/feed/data/datasources/feed_remote_data_source.dart';
 import 'features/feed/data/datasources/feed_mock_data_source.dart';
-import 'features/chat/viewmodels/chat_viewmodel.dart';
+import 'features/chat/viewmodels/chat_list_viewmodel.dart';
 import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/presentation/viewmodels/user_info_viewmodel.dart';
 
@@ -34,7 +34,7 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => FeedViewModel(repository: feedRepository),
         ),
-        ChangeNotifierProvider(create: (_) => ChatViewModel()),
+        // ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],
       child: const MyApp(),
     ),

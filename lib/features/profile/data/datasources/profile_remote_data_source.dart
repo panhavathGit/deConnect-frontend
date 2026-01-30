@@ -8,6 +8,7 @@ abstract class ProfileRemoteDataSource {
   Future<ProfileStats> getProfileStats(String userId);
   Future<List<FeedPost>> getUserPosts(String userId);
   Future<void> updateProfile(UserModel.User user);
+  Future<List<UserModel.User>> getAllUsers();
 }
 
 class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
@@ -143,6 +144,37 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       print('✅ Profile updated successfully');
     } catch (e) {
       print('❌ Error updating profile: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<UserModel.User>> getAllUsers() async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      print('👥 Fetching all users from Supabase');
+      
+      final response = await _supabase
+          .from('profiles')
+          .select()
+          .neq('id', currentUserId ?? '') // Exclude current user
+          .order('username');
+
+      final users = (response as List).map((json) {
+        return UserModel.User(
+          id: json['id'],
+          name: json['username'] ?? 'Unknown',
+          email: json['email'] ?? '',
+          avatarUrl: json['avatar_url'],
+          bio: json['bio'],
+          createdAt: DateTime.parse(json['created_at']),
+        );
+      }).toList();
+
+      print('✅ Fetched ${users.length} users');
+      return users;
+    } catch (e) {
+      print('❌ Error fetching users: $e');
       rethrow;
     }
   }

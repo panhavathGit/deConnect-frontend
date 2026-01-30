@@ -1,121 +1,147 @@
+// lib/features/chat/views/chat_room_page.dart
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../viewmodels/chat_viewmodel.dart';
-import '../../../../core/services/supabase_service.dart'; // Needed to check "Is this my message?"
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import '../../../core/app_export.dart';
+import '../viewmodels/chat_room_viewmodel.dart';
+import '../data/repositories/chat_repository_impl.dart';
+import '../data/datasources/chat_remote_data_source.dart';
 
-class ChatRoomPage extends StatefulWidget {
+class ChatRoomPage extends StatelessWidget {
   final String roomId;
-  
-  const ChatRoomPage({super.key, required this.roomId});
+  final String roomName;
+
+  const ChatRoomPage({
+    super.key,
+    required this.roomId,
+    required this.roomName,
+  });
 
   @override
-  State<ChatRoomPage> createState() => _ChatRoomPageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => ChatRoomViewModel(
+        repository: ChatRepositoryImpl(
+          remoteDataSource: ChatRemoteDataSourceImpl(),
+        ),
+        roomId: roomId,
+      )..loadMessages(),
+      child: _ChatRoomPageContent(roomName: roomName),
+    );
+  }
 }
 
-class _ChatRoomPageState extends State<ChatRoomPage> {
-  final TextEditingController _msgController = TextEditingController();
+class _ChatRoomPageContent extends StatelessWidget {
+  final String roomName;
 
-  @override
-  void dispose() {
-    _msgController.dispose();
-    super.dispose();
+  const _ChatRoomPageContent({required this.roomName});
+
+  void _handleSendPressed(BuildContext context, types.PartialText message) async {
+    final viewModel = context.read<ChatRoomViewModel>();
+    await viewModel.sendMessage(message.text);
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Access the ViewModel
-    final viewModel = context.read<ChatViewModel>();
-    // 2. Get current User ID to decide Left vs Right alignment
-    final currentUserId = SupabaseService.client.auth.currentUser?.id;
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Conversation")),
-      body: Column(
-        children: [
-          // === MESSAGE LIST (REALTIME STREAM) ===
-          Expanded(
-            child: StreamBuilder<List<Map<String, dynamic>>>(
-              // Asking ViewModel for the stream
-              stream: viewModel.getMessages(widget.roomId),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
-                }
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          roomName,
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF053CC7),
+        foregroundColor: Colors.white,
+      ),
+      body: Consumer<ChatRoomViewModel>(
+        builder: (context, viewModel, _) {
+          // Debug print
+          debugPrint('🔍 ChatRoom Status: ${viewModel.status}, Loading: ${viewModel.isLoading}, Messages: ${viewModel.messages.length}');
+          
+          if (viewModel.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF053CC7),
+              ),
+            );
+          }
 
-                final messages = snapshot.data!;
-                
-                if (messages.isEmpty) {
-                  return const Center(child: Text("Start the conversation!"));
-                }
-
-                return ListView.builder(
-                  reverse: true, // Important: Newest messages at the bottom
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msg = messages[index];
-                    final isMe = msg['sender_id'] == currentUserId;
-
-                    return Align(
-                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isMe ? Colors.blue : Colors.grey[300],
-                          borderRadius: BorderRadius.only(
-                            topLeft: const Radius.circular(12),
-                            topRight: const Radius.circular(12),
-                            bottomLeft: isMe ? const Radius.circular(12) : Radius.zero,
-                            bottomRight: isMe ? Radius.zero : const Radius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          msg['content'] ?? '',
-                          style: TextStyle(color: isMe ? Colors.white : Colors.black),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-
-          // === INPUT FIELD ===
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _msgController,
-                    decoration: const InputDecoration(
-                      hintText: "Type a message...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(20)),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16),
+          if (viewModel.status == ChatRoomStatus.error) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      viewModel.errorMessage ?? 'Failed to load messages',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.send, color: Colors.blue),
-                  onPressed: () {
-                    final text = _msgController.text;
-                    if (text.isNotEmpty) {
-                      viewModel.sendMessage(widget.roomId, text);
-                      _msgController.clear();
-                    }
-                  },
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => viewModel.loadMessages(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          // Convert ChatMessage to flutter_chat_types Message
+          final chatMessages = viewModel.messages.map((msg) {
+            final isCurrentUser = msg.senderId == viewModel.currentUserId;
+            
+            return types.TextMessage(
+              author: types.User(
+                id: msg.senderId,
+                firstName: msg.senderName ?? 'User',
+                imageUrl: msg.senderAvatar,
+              ),
+              createdAt: msg.createdAt.millisecondsSinceEpoch,
+              id: msg.id,
+              text: msg.content,
+              status: isCurrentUser ? types.Status.sent : null,
+            );
+          }).toList();
+
+          return Chat(
+            messages: chatMessages,
+            onSendPressed: (message) => _handleSendPressed(context, message),
+            user: types.User(
+              id: viewModel.currentUserId,
+              firstName: 'You',
             ),
-          ),
-        ],
+            theme: DefaultChatTheme(
+              backgroundColor: Colors.white,
+              primaryColor: const Color(0xFF053CC7),
+              secondaryColor: const Color(0xFFF5F5F5),
+              inputBackgroundColor: const Color(0xFFF5F5F5),
+              inputTextColor: Colors.black,
+              inputBorderRadius: BorderRadius.circular(24),
+              messageBorderRadius: 20,
+              sentMessageBodyTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+              receivedMessageBodyTextStyle: const TextStyle(
+                color: Colors.black87,
+                fontSize: 16,
+              ),
+            ),
+            showUserAvatars: true,
+            showUserNames: true,
+            emptyState: const Center(
+              child: Text(
+                'No messages here yet',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
