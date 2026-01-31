@@ -9,7 +9,6 @@ abstract class ChatRemoteDataSource {
   Future<ChatRoom> getOrCreateDirectRoom(String otherUserId);
   Future<List<ChatMessage>> getMessages(String roomId);
   Future<ChatMessage> sendMessage(String roomId, String content);
-  // Stream<ChatMessage> subscribeToMessages(String roomId);
   Stream<List<ChatMessage>> streamMessages(String roomId);
 }
 
@@ -24,9 +23,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       print('📥 Fetching chat rooms for user: $currentUserId');
 
-      // Get all room IDs user is member of - CHANGED TABLE NAME
       final memberRooms = await _supabase
-          .from('room_members')  // Changed from 'chat_room_members'
+          .from('room_members')
           .select('room_id')
           .eq('user_id', currentUserId);
 
@@ -37,7 +35,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       final roomIds = (memberRooms as List).map((m) => m['room_id']).toList();
 
-      // Get room details
       final rooms = await _supabase
           .from('chat_rooms')
           .select()
@@ -52,10 +49,9 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         String? otherUserName;
         String? otherUserAvatar;
 
-        // For 1-on-1 chats, get other user info - CHANGED TABLE NAME
         if (!isGroup) {
           final otherMembers = await _supabase
-              .from('room_members')  // Changed from 'chat_room_members'
+              .from('room_members')
               .select('''
                 user_id,
                 profiles!inner(username, avatar_url)
@@ -71,7 +67,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
           }
         }
 
-        // Get last message
         final lastMessages = await _supabase
             .from('messages')
             .select('content, created_at')
@@ -80,9 +75,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
             .order('created_at', ascending: false)
             .limit(1);
 
-        // Get unread count - CHANGED TABLE NAME
         final member = await _supabase
-            .from('room_members')  // Changed from 'chat_room_members'
+            .from('room_members')
             .select('last_read_at')
             .eq('room_id', roomId)
             .eq('user_id', currentUserId)
@@ -124,7 +118,6 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
         ));
       }
 
-      // Sort by last message time
       chatRooms.sort((a, b) {
         if (a.lastMessageTime == null) return 1;
         if (b.lastMessageTime == null) return -1;
@@ -147,9 +140,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       print('🔍 Looking for existing room with user: $otherUserId');
 
-      // Find existing direct room between these two users - CHANGED TABLE NAME
       final myRooms = await _supabase
-          .from('room_members')  // Changed from 'chat_room_members'
+          .from('room_members')
           .select('room_id')
           .eq('user_id', currentUserId);
 
@@ -157,13 +149,12 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       if (myRoomIds.isNotEmpty) {
         final sharedRooms = await _supabase
-            .from('room_members')  // Changed from 'chat_room_members'
+            .from('room_members')
             .select('room_id')
             .eq('user_id', otherUserId)
             .inFilter('room_id', myRoomIds);
 
         if (sharedRooms.isNotEmpty) {
-          // Check if it's a direct room (not group)
           for (var room in sharedRooms) {
             final roomData = await _supabase
                 .from('chat_rooms')
@@ -183,21 +174,31 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 
       print('📝 Creating new chat room');
 
-      // Create new room (name can be null for private chats)
       final newRoom = await _supabase
           .from('chat_rooms')
           .insert({
-            'name': null,  // Private chats don't need a name
+            'name': null,
             'is_group': false,
             'created_by': currentUserId,
           })
           .select()
           .single();
 
-      // Add both users as members - CHANGED TABLE NAME
-      await _supabase.from('room_members').insert([  // Changed from 'chat_room_members'
-        {'room_id': newRoom['id'], 'user_id': currentUserId},
-        {'room_id': newRoom['id'], 'user_id': otherUserId},
+      await _supabase.from('room_members').insert([
+        {
+          'room_id': newRoom['id'],
+          'user_id': currentUserId,
+          'is_admin': false,
+          'admin_order': 999999,
+          'joined_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'room_id': newRoom['id'],
+          'user_id': otherUserId,
+          'is_admin': false,
+          'admin_order': 999999,
+          'joined_at': DateTime.now().toIso8601String(),
+        },
       ]);
 
       print('✅ Created new room: ${newRoom['id']}');
@@ -268,70 +269,59 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
     }
   }
 
-  // @override
-  // Stream<ChatMessage> subscribeToMessages(String roomId) {
-  //   print('👂 Subscribing to messages in room: $roomId');
-    
-  //   final controller = StreamController<ChatMessage>.broadcast();
-
-  //   final subscription = _supabase
-  //       .from('messages')
-  //       .stream(primaryKey: ['id'])
-  //       .eq('room_id', roomId)
-  //       .order('created_at')
-  //       .listen((data) async {
-  //         if (data.isNotEmpty) {
-  //           final latestMsg = data.last;
-  //           // Fetch with profile info
-  //           final fullMsg = await _supabase
-  //               .from('messages')
-  //               .select('''
-  //                 *,
-  //                 profiles:sender_id(username, avatar_url)
-  //               ''')
-  //               .eq('id', latestMsg['id'])
-  //               .single();
-            
-  //           controller.add(ChatMessage.fromJson(fullMsg));
-  //         }
-  //       });
-
-  //   controller.onCancel = () {
-  //     subscription.cancel();
-  //   };
-
-  //   return controller.stream;
-  // }
-
+  // ✅ FIXED: Simplified stream without async issues
   @override
-Stream<List<ChatMessage>> streamMessages(String roomId) {
-  print('👂 Streaming messages in room: $roomId');
-  
-  return _supabase
-      .from('messages')
-      .stream(primaryKey: ['id'])
-      .eq('room_id', roomId)
-      .order('created_at', ascending: false)
-      .map((data) async {
-        // Fetch full message data with profiles
-        final messageIds = data.map((msg) => msg['id']).toList();
-        
-        if (messageIds.isEmpty) return <ChatMessage>[];
-        
-        final fullMessages = await _supabase
-            .from('messages')
-            .select('''
-              *,
-              profiles:sender_id(username, avatar_url)
-            ''')
-            .inFilter('id', messageIds)
-            .isFilter('deleted_at', null)
-            .order('created_at', ascending: false);
-        
-        return (fullMessages as List)
-            .map((json) => ChatMessage.fromJson(json))
-            .toList();
-      })
-      .asyncMap((future) => future);
-}
+  Stream<List<ChatMessage>> streamMessages(String roomId) {
+    print('👂 Streaming messages in room: $roomId');
+
+    // Use a StreamController to handle async operations properly
+    final controller = StreamController<List<ChatMessage>>.broadcast();
+
+    final subscription = _supabase
+        .from('messages')
+        .stream(primaryKey: ['id'])
+        .eq('room_id', roomId)
+        .order('created_at', ascending: false)
+        .listen((data) async {
+          try {
+            if (data.isEmpty) {
+              controller.add(<ChatMessage>[]);
+              return;
+            }
+
+            // Fetch messages with profile data
+            final messageIds = data.map((msg) => msg['id']).toList();
+
+            final fullMessages = await _supabase
+                .from('messages')
+                .select('''
+                  *,
+                  profiles:sender_id(username, avatar_url)
+                ''')
+                .inFilter('id', messageIds)
+                .isFilter('deleted_at', null)
+                .order('created_at', ascending: false);
+
+            final messages = (fullMessages as List)
+                .map((json) => ChatMessage.fromJson(json))
+                .toList();
+
+            print('📨 Stream emitting ${messages.length} messages');
+            controller.add(messages);
+          } catch (e) {
+            print('❌ Error in stream: $e');
+            controller.addError(e);
+          }
+        }, onError: (error) {
+          print('❌ Stream error: $error');
+          controller.addError(error);
+        });
+
+    controller.onCancel = () {
+      print('🛑 Stream cancelled');
+      subscription.cancel();
+    };
+
+    return controller.stream;
+  }
 }

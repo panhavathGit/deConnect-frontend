@@ -6,7 +6,7 @@ import '../data/repositories/chat_repository_impl.dart';
 import '../data/datasources/chat_remote_data_source.dart';
 import 'chat_room_page.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import './select_user_page.dart';
+import 'select_user_page.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});
