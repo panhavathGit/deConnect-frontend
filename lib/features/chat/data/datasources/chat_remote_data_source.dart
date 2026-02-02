@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as path;
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
+import '../models/group_chat_model.dart';
 
 abstract class ChatRemoteDataSource {
   Future<List<ChatRoom>> getChatRooms();
@@ -22,6 +23,13 @@ abstract class ChatRemoteDataSource {
   // Presence
   Stream<Map<String, dynamic>> streamUserPresence(String userId);
   Future<void> updateMyPresence();
+
+  // Group Chat Methods
+  Future<CreateGroupResponse> createGroup(String name, {String? description});
+  Future<JoinGroupResponse> joinGroupByCode(String code);
+  Future<List<GroupChat>> getMyGroups();
+  Future<String> regenerateInviteCode(String roomId);
+
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
@@ -111,6 +119,27 @@ Future<List<ChatRoom>> getChatRooms() async {
     final roomId = roomData['id'] as String;
 
     // Get members from map
+    // final members = membersMap[roomId] ?? [];
+    // String? otherUserId;
+    // DateTime? otherUserLastSeen;
+    // bool otherUserIsOnline = false;
+    // String roomName = roomData['name'] ?? 'Chat';
+    // String? roomAvatar;
+
+    // if (roomData['is_group'] == false && members.isNotEmpty) {
+    //   final otherUser = members.first;
+    //   otherUserId = otherUser['user_id'];
+    //   if (otherUser['profiles'] != null) {
+    //     roomName = otherUser['profiles']['username'] ?? 'User';
+    //     roomAvatar = otherUser['profiles']['avatar_url'];
+    //     if (otherUser['profiles']['last_seen'] != null) {
+    //       otherUserLastSeen = DateTime.parse(otherUser['profiles']['last_seen']);
+    //     }
+    //     otherUserIsOnline = otherUser['profiles']['is_online'] ?? false;
+    //   }
+    // }
+
+        // Get members from map
     final members = membersMap[roomId] ?? [];
     String? otherUserId;
     DateTime? otherUserLastSeen;
@@ -118,6 +147,7 @@ Future<List<ChatRoom>> getChatRooms() async {
     String roomName = roomData['name'] ?? 'Chat';
     String? roomAvatar;
 
+    // Only get user info from members if it's a direct chat (not a group)
     if (roomData['is_group'] == false && members.isNotEmpty) {
       final otherUser = members.first;
       otherUserId = otherUser['user_id'];
@@ -129,6 +159,10 @@ Future<List<ChatRoom>> getChatRooms() async {
         }
         otherUserIsOnline = otherUser['profiles']['is_online'] ?? false;
       }
+    } else if (roomData['is_group'] == true) {
+      // For group chats, use the room's name and avatar
+      roomName = roomData['name'] ?? 'Group Chat';
+      roomAvatar = null; // Groups don't have avatars yet in your schema
     }
 
     // Get last message from map
@@ -637,6 +671,73 @@ Future<void> markMessagesAsRead(String roomId) async {
     } catch (e) {
       debugPrint('❌ Error getting presence: $e');
       return null;
+    }
+  }
+
+    // ============================================================
+  // GROUP CHAT METHODS
+  // ============================================================
+  
+  Future<CreateGroupResponse> createGroup(String name, {String? description}) async {
+    debugPrint('👥 Creating group: $name');
+    try {
+      final response = await _supabase.rpc('create_group_chat', params: {
+        'p_name': name,
+        'p_description': description,
+      }).select().single();
+
+      debugPrint('✅ Group created: ${response['room_id']}');
+      return CreateGroupResponse.fromJson(response);
+    } catch (e) {
+      debugPrint('❌ Error creating group: $e');
+      rethrow;
+    }
+  }
+
+  Future<JoinGroupResponse> joinGroupByCode(String code) async {
+    debugPrint('🔑 Joining group with code: $code');
+    try {
+      final response = await _supabase.rpc('join_group_by_code', params: {
+        'p_code': code.trim().toUpperCase(),
+      }).select().single();
+
+      debugPrint('✅ Join response: $response');
+      return JoinGroupResponse.fromJson(response);
+    } catch (e) {
+      debugPrint('❌ Error joining group: $e');
+      rethrow;
+    }
+  }
+
+  Future<List<GroupChat>> getMyGroups() async {
+    debugPrint('📥 Fetching my groups');
+    try {
+      final response = await _supabase.rpc('get_my_groups').select();
+
+      final groups = (response as List)
+          .map((json) => GroupChat.fromJson(json))
+          .toList();
+
+      debugPrint('✅ Fetched ${groups.length} groups');
+      return groups;
+    } catch (e) {
+      debugPrint('❌ Error fetching groups: $e');
+      rethrow;
+    }
+  }
+
+  Future<String> regenerateInviteCode(String roomId) async {
+    debugPrint('🔄 Regenerating invite code for room: $roomId');
+    try {
+      final newCode = await _supabase.rpc('regenerate_invite_code', params: {
+        'p_room_id': roomId,
+      });
+
+      debugPrint('✅ New code generated: $newCode');
+      return newCode as String;
+    } catch (e) {
+      debugPrint('❌ Error regenerating code: $e');
+      rethrow;
     }
   }
 }

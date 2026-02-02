@@ -1,6 +1,10 @@
+// lib/features/chat/views/join_group_page.dart
+
 import 'package:flutter/material.dart';
 import '../../../core/app_export.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../data/repositories/chat_repository_impl.dart';
+import '../data/datasources/chat_remote_data_source.dart';
 
 class JoinGroupPage extends StatefulWidget {
   const JoinGroupPage({super.key});
@@ -12,6 +16,10 @@ class JoinGroupPage extends StatefulWidget {
 class _JoinGroupPageState extends State<JoinGroupPage> {
   final _formKey = GlobalKey<FormState>();
   final _joinCodeController = TextEditingController();
+  final _repository = ChatRepositoryImpl(
+    remoteDataSource: ChatRemoteDataSourceImpl(),
+  );
+  bool _isJoining = false;
 
   @override
   void dispose() {
@@ -19,14 +27,72 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
     super.dispose();
   }
 
-  void _handleJoinGroup() {
-    if (_formKey.currentState!.validate()) {
-      // TODO: Implement join group logic
+  Future<void> _handleJoinGroup() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isJoining = true);
+
+    try {
       final joinCode = _joinCodeController.text.trim();
-      print('Joining group with code: $joinCode');
       
-      // Navigate back or show success message
-      Navigator.pop(context);
+      // Call backend to join group
+      final response = await _repository.joinGroupByCode(joinCode);
+      
+      if (!mounted) return;
+
+      if (response.success) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: appTheme.greenCustom ?? Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Navigate back to chat list (pop twice to get back to chat list)
+        Navigator.pop(context);
+        
+        // Optional: Show another success message on the chat list
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Joined "${response.roomName ?? 'group'}" successfully!'),
+              backgroundColor: appTheme.greenCustom ?? Colors.green,
+              action: SnackBarAction(
+                label: 'View',
+                textColor: Colors.white,
+                onPressed: () {
+                  // Optionally navigate to the group chat
+                  if (response.roomId != null) {
+                    // You can implement navigation to the chat room here if needed
+                  }
+                },
+              ),
+            ),
+          );
+        }
+      } else {
+        // Show error message
+        setState(() => _isJoining = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(response.message),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      
+      setState(() => _isJoining = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to join group: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -87,6 +153,7 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
                   TextFormField(
                     controller: _joinCodeController,
                     textAlign: TextAlign.center,
+                    textCapitalization: TextCapitalization.characters,
                     style: TextStyleHelper.instance.body15MediumInter.copyWith(
                       fontSize: 18,
                       height: 1.5,
@@ -172,7 +239,7 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(24.0),
         child: CustomButton(
-          text: 'Join',
+          text: _isJoining ? 'Joining...' : 'Join',
           width: double.infinity,
           backgroundColor: appTheme.blue_900,
           textColor: appTheme.white_A700,
@@ -180,7 +247,8 @@ class _JoinGroupPageState extends State<JoinGroupPage> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          onPressed: _handleJoinGroup,
+          onPressed: _isJoining ? null : _handleJoinGroup,
+          isEnabled: !_isJoining,
         ),
       ),
     );

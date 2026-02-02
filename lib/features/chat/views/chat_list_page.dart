@@ -12,6 +12,7 @@ import 'select_user_page.dart';
 import 'package:intl/intl.dart';
 import './create_group_page.dart';
 import './join_group_page.dart';
+import './your_group_page.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});
@@ -59,6 +60,35 @@ class _ChatListPageContentState extends State<_ChatListPageContent> {
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.folder_special),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const YourGroupsPage(),
+                ),
+              );
+            },
+            tooltip: 'Your Groups',
+          ),
+          IconButton(
+            icon: const Icon(Icons.group),
+            onPressed: () async {
+              final result = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const JoinGroupPage(),
+                ),
+              );
+              
+              // Refresh if joined successfully
+              if (result == true && mounted) {
+                context.read<ChatListViewModel>().refresh();
+              }
+            },
+            tooltip: 'Join Group',
+          ),
+          IconButton(
             icon: const Icon(Icons.group_add),
             onPressed: () {
               // Navigate to user selection
@@ -70,18 +100,18 @@ class _ChatListPageContentState extends State<_ChatListPageContent> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.group),
-            onPressed: () {
-              // Navigate to user selection
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const JoinGroupPage(),
-                ),
-              );
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.group),
+          //   onPressed: () {
+          //     // Navigate to user selection
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => const JoinGroupPage(),
+          //       ),
+          //     );
+          //   },
+          // ),
           IconButton(
             icon: const Icon(Icons.add_comment),
             onPressed: () {
