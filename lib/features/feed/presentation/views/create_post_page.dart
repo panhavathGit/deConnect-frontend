@@ -8,6 +8,7 @@ import '../../../../core/widgets/custom_button.dart';
 import '../../../../core/widgets/custom_edit_text.dart';
 import '../viewmodels/create_post_viewmodel.dart';
 import 'package:go_router/go_router.dart';
+import '../viewmodels/feed_viewmodel.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
@@ -129,6 +130,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
             backgroundColor: appTheme.greenCustom,
           ),
         );
+        context.read<FeedViewModel>().loadPosts();
         context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

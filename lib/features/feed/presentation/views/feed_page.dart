@@ -40,6 +40,7 @@ class _FeedPageState extends State<FeedPage> {
         actionBackgroundColor: Color(0x33868686),
         onActionPressed: () {
           // Navigate to messages/notifications
+          context.go('/chat');
         },
       ),
       body: Column(

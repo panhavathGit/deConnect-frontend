@@ -1,327 +1,642 @@
 // lib/features/chat/data/datasources/chat_remote_data_source.dart
+
 import 'dart:async';
-import '../../../../core/services/supabase_service.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:path/path.dart' as path;
 import '../models/chat_room_model.dart';
 import '../models/message_model.dart';
 
 abstract class ChatRemoteDataSource {
   Future<List<ChatRoom>> getChatRooms();
-  Future<ChatRoom> getOrCreateDirectRoom(String otherUserId);
-  Future<List<ChatMessage>> getMessages(String roomId);
+  Future<ChatRoom?> createDirectChat(String otherUserId);
   Future<ChatMessage> sendMessage(String roomId, String content);
+  Future<ChatMessage> sendFileMessage(String roomId, File file, {String? caption});
   Stream<List<ChatMessage>> streamMessages(String roomId);
+  Future<void> editMessage(String messageId, String newContent);
+  Future<void> deleteMessage(String messageId);
+  Future<void> markMessagesAsRead(String roomId);
+  Future<void> setTypingIndicator(String roomId, bool isTyping);
+  Stream<List<String>> streamTypingUsers(String roomId);
+  // Presence
+  Stream<Map<String, dynamic>> streamUserPresence(String userId);
+  Future<void> updateMyPresence();
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
-  final _supabase = SupabaseService.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
+  String get _currentUserId => _supabase.auth.currentUser!.id;
 
-  @override
-  Future<List<ChatRoom>> getChatRooms() async {
-    try {
-      final currentUserId = _supabase.auth.currentUser?.id;
-      if (currentUserId == null) throw Exception('Not authenticated');
+ @override
+Future<List<ChatRoom>> getChatRooms() async {
+  debugPrint('📥 Fetching chat rooms for user: $_currentUserId');
+  
+  // Update my presence when fetching chats
+  updateMyPresence(); // Don't await - fire and forget
+  
+  // OPTIMIZED: Single query with all joins
+  final response = await _supabase
+      .from('room_members')
+      .select('''
+        room_id,
+        chat_rooms!inner (
+          id,
+          name,
+          is_group,
+          created_at,
+          created_by
+        )
+      ''')
+      .eq('user_id', _currentUserId);
 
-      print('📥 Fetching chat rooms for user: $currentUserId');
+  if (response.isEmpty) {
+    debugPrint('✅ No chat rooms found');
+    return [];
+  }
 
-      final memberRooms = await _supabase
-          .from('room_members')
-          .select('room_id')
-          .eq('user_id', currentUserId);
+  // Get all room IDs
+  final roomIds = response.map((item) => item['chat_rooms']['id'] as String).toList();
 
-      if (memberRooms.isEmpty) {
-        print('✅ No chat rooms found');
-        return [];
-      }
+  // BATCH QUERY 1: Get all members for all rooms at once
+  final allMembersResponse = await _supabase
+      .from('room_members')
+      .select('room_id, user_id, profiles(username, avatar_url, last_seen, is_online)')
+      .inFilter('room_id', roomIds)
+      .neq('user_id', _currentUserId);
 
-      final roomIds = (memberRooms as List).map((m) => m['room_id']).toList();
+  // BATCH QUERY 2: Get last message for all rooms at once using RPC or manual grouping
+  final allMessagesResponse = await _supabase
+      .from('messages')
+      .select('room_id, content, media_url, media_type, created_at, sender_id')
+      .inFilter('room_id', roomIds)
+      .eq('is_deleted', false)
+      .order('created_at', ascending: false);
 
-      final rooms = await _supabase
-          .from('chat_rooms')
-          .select()
-          .inFilter('id', roomIds);
+  // BATCH QUERY 3: Get unread counts for all rooms
+  final allUnreadResponse = await _supabase
+      .from('messages')
+      .select('room_id, id')
+      .inFilter('room_id', roomIds)
+      .neq('sender_id', _currentUserId)
+      .eq('is_read', false)
+      .eq('is_deleted', false);
 
-      List<ChatRoom> chatRooms = [];
+  // Process results into maps for fast lookup
+  final membersMap = <String, List<Map<String, dynamic>>>{};
+  for (final member in allMembersResponse) {
+    final roomId = member['room_id'] as String;
+    membersMap.putIfAbsent(roomId, () => []).add(member);
+  }
 
-      for (var roomData in rooms) {
-        final roomId = roomData['id'];
-        final isGroup = roomData['is_group'];
-
-        String? otherUserName;
-        String? otherUserAvatar;
-
-        if (!isGroup) {
-          final otherMembers = await _supabase
-              .from('room_members')
-              .select('''
-                user_id,
-                profiles!inner(username, avatar_url)
-              ''')
-              .eq('room_id', roomId)
-              .neq('user_id', currentUserId)
-              .limit(1);
-
-          if (otherMembers.isNotEmpty) {
-            final profile = otherMembers[0]['profiles'];
-            otherUserName = profile['username'];
-            otherUserAvatar = profile['avatar_url'];
-          }
-        }
-
-        final lastMessages = await _supabase
-            .from('messages')
-            .select('content, created_at')
-            .eq('room_id', roomId)
-            .isFilter('deleted_at', null)
-            .order('created_at', ascending: false)
-            .limit(1);
-
-        final member = await _supabase
-            .from('room_members')
-            .select('last_read_at')
-            .eq('room_id', roomId)
-            .eq('user_id', currentUserId)
-            .single();
-
-        final lastReadAt = member['last_read_at'] != null
-            ? DateTime.parse(member['last_read_at'])
-            : DateTime.now();
-
-        final unreadMessages = await _supabase
-            .from('messages')
-            .select('id')
-            .eq('room_id', roomId)
-            .neq('sender_id', currentUserId)
-            .gt('created_at', lastReadAt.toIso8601String());
-
-        final unreadCount = (unreadMessages as List).length;
-
-        chatRooms.add(ChatRoom(
-          id: roomId,
-          name: roomData['name'],
-          isGroup: isGroup,
-          createdBy: roomData['created_by'],
-          createdAt: DateTime.parse(roomData['created_at']),
-          updatedAt: DateTime.parse(roomData['updated_at']),
-          inviteCode: roomData['invite_code'],
-          maxMembers: roomData['max_members'],
-          inviteLinkEnabled: roomData['invite_link_enabled'] ?? true,
-          inviteExpiresAt: roomData['invite_expires_at'] != null
-              ? DateTime.parse(roomData['invite_expires_at'])
-              : null,
-          otherUserName: otherUserName,
-          otherUserAvatar: otherUserAvatar,
-          lastMessage: lastMessages.isNotEmpty ? lastMessages[0]['content'] : null,
-          lastMessageTime: lastMessages.isNotEmpty
-              ? DateTime.parse(lastMessages[0]['created_at'])
-              : null,
-          unreadCount: unreadCount,
-        ));
-      }
-
-      chatRooms.sort((a, b) {
-        if (a.lastMessageTime == null) return 1;
-        if (b.lastMessageTime == null) return -1;
-        return b.lastMessageTime!.compareTo(a.lastMessageTime!);
-      });
-
-      print('✅ Fetched ${chatRooms.length} chat rooms');
-      return chatRooms;
-    } catch (e) {
-      print('❌ Error fetching chat rooms: $e');
-      throw Exception('Failed to fetch chat rooms: $e');
+  final lastMessageMap = <String, Map<String, dynamic>>{};
+  for (final msg in allMessagesResponse) {
+    final roomId = msg['room_id'] as String;
+    if (!lastMessageMap.containsKey(roomId)) {
+      lastMessageMap[roomId] = msg;
     }
   }
 
+  final unreadCountMap = <String, int>{};
+  for (final msg in allUnreadResponse) {
+    final roomId = msg['room_id'] as String;
+    unreadCountMap[roomId] = (unreadCountMap[roomId] ?? 0) + 1;
+  }
+
+  // Build rooms list
+  final List<ChatRoom> rooms = [];
+
+  for (final item in response) {
+    final roomData = item['chat_rooms'];
+    final roomId = roomData['id'] as String;
+
+    // Get members from map
+    final members = membersMap[roomId] ?? [];
+    String? otherUserId;
+    DateTime? otherUserLastSeen;
+    bool otherUserIsOnline = false;
+    String roomName = roomData['name'] ?? 'Chat';
+    String? roomAvatar;
+
+    if (roomData['is_group'] == false && members.isNotEmpty) {
+      final otherUser = members.first;
+      otherUserId = otherUser['user_id'];
+      if (otherUser['profiles'] != null) {
+        roomName = otherUser['profiles']['username'] ?? 'User';
+        roomAvatar = otherUser['profiles']['avatar_url'];
+        if (otherUser['profiles']['last_seen'] != null) {
+          otherUserLastSeen = DateTime.parse(otherUser['profiles']['last_seen']);
+        }
+        otherUserIsOnline = otherUser['profiles']['is_online'] ?? false;
+      }
+    }
+
+    // Get last message from map
+    String? lastMessage;
+    DateTime? lastMessageTime;
+    final lastMsgData = lastMessageMap[roomId];
+    if (lastMsgData != null) {
+      final content = lastMsgData['content'] ?? '';
+      final mediaUrl = lastMsgData['media_url'];
+      final mediaType = lastMsgData['media_type'];
+
+      if (mediaUrl != null && content.isEmpty) {
+        if (mediaType == 'image' || (mediaUrl as String).contains(RegExp(r'\.(jpg|png|gif|webp)', caseSensitive: false))) {
+          lastMessage = '📷 Photo';
+        } else if (mediaType == 'video') {
+          lastMessage = '🎥 Video';
+        } else if (mediaType == 'pdf' || mediaUrl.contains('.pdf')) {
+          lastMessage = '📄 PDF';
+        } else if (mediaType == 'audio') {
+          lastMessage = '🎵 Audio';
+        } else {
+          lastMessage = '📎 File';
+        }
+      } else if (mediaUrl != null) {
+        lastMessage = '📎 $content';
+      } else {
+        lastMessage = content;
+      }
+      lastMessageTime = DateTime.parse(lastMsgData['created_at']);
+    }
+
+    // Get unread count from map
+    final unreadCount = unreadCountMap[roomId] ?? 0;
+
+    rooms.add(ChatRoom(
+      id: roomId,
+      name: roomName,
+      isGroup: roomData['is_group'] ?? false,
+      avatarUrl: roomAvatar,
+      lastMessage: lastMessage,
+      lastMessageTime: lastMessageTime,
+      unreadCount: unreadCount,
+      createdAt: DateTime.parse(roomData['created_at']),
+      otherUserId: otherUserId,
+      otherUserLastSeen: otherUserLastSeen,
+      otherUserIsOnline: otherUserIsOnline,
+    ));
+  }
+
+  // Sort by last message time
+  rooms.sort((a, b) {
+    if (a.lastMessageTime == null && b.lastMessageTime == null) return 0;
+    if (a.lastMessageTime == null) return 1;
+    if (b.lastMessageTime == null) return -1;
+    return b.lastMessageTime!.compareTo(a.lastMessageTime!);
+  });
+
+  debugPrint('✅ Fetched ${rooms.length} chat rooms (OPTIMIZED)');
+  return rooms;
+}
+
   @override
-  Future<ChatRoom> getOrCreateDirectRoom(String otherUserId) async {
+  Future<ChatRoom?> createDirectChat(String otherUserId) async {
+    debugPrint('💬 Creating chat room with user: $otherUserId');
     try {
-      final currentUserId = _supabase.auth.currentUser?.id;
-      if (currentUserId == null) throw Exception('Not authenticated');
-
-      print('🔍 Looking for existing room with user: $otherUserId');
-
       final myRooms = await _supabase
           .from('room_members')
           .select('room_id')
-          .eq('user_id', currentUserId);
+          .eq('user_id', _currentUserId);
 
-      final myRoomIds = (myRooms as List).map((m) => m['room_id']).toList();
+      for (final room in myRooms) {
+        final roomId = room['room_id'];
+        final roomInfo = await _supabase
+            .from('chat_rooms')
+            .select()
+            .eq('id', roomId)
+            .eq('is_group', false)
+            .maybeSingle();
 
-      if (myRoomIds.isNotEmpty) {
-        final sharedRooms = await _supabase
-            .from('room_members')
-            .select('room_id')
-            .eq('user_id', otherUserId)
-            .inFilter('room_id', myRoomIds);
+        if (roomInfo != null) {
+          final otherMember = await _supabase
+              .from('room_members')
+              .select()
+              .eq('room_id', roomId)
+              .eq('user_id', otherUserId)
+              .maybeSingle();
 
-        if (sharedRooms.isNotEmpty) {
-          for (var room in sharedRooms) {
-            final roomData = await _supabase
-                .from('chat_rooms')
-                .select()
-                .eq('id', room['room_id'])
-                .eq('is_group', false)
-                .maybeSingle();
-
-            if (roomData != null) {
-              print('✅ Found existing room: ${roomData['id']}');
-              final rooms = await getChatRooms();
-              return rooms.firstWhere((r) => r.id == roomData['id']);
-            }
+          if (otherMember != null) {
+            debugPrint('✅ Found existing room: $roomId');
+            final rooms = await getChatRooms();
+            return rooms.firstWhere((r) => r.id == roomId);
           }
         }
       }
 
-      print('📝 Creating new chat room');
+      final roomResponse = await _supabase.from('chat_rooms').insert({
+        'name': null,
+        'is_group': false,
+        'created_by': _currentUserId,
+      }).select().single();
 
-      final newRoom = await _supabase
-          .from('chat_rooms')
-          .insert({
-            'name': null,
-            'is_group': false,
-            'created_by': currentUserId,
-          })
-          .select()
-          .single();
+      final roomId = roomResponse['id'];
+      debugPrint('✅ Created room: $roomId');
 
       await _supabase.from('room_members').insert([
-        {
-          'room_id': newRoom['id'],
-          'user_id': currentUserId,
-          'is_admin': false,
-          'admin_order': 999999,
-          'joined_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'room_id': newRoom['id'],
-          'user_id': otherUserId,
-          'is_admin': false,
-          'admin_order': 999999,
-          'joined_at': DateTime.now().toIso8601String(),
-        },
+        {'room_id': roomId, 'user_id': _currentUserId},
+        {'room_id': roomId, 'user_id': otherUserId},
       ]);
 
-      print('✅ Created new room: ${newRoom['id']}');
-
       final rooms = await getChatRooms();
-      return rooms.firstWhere((r) => r.id == newRoom['id']);
+      return rooms.firstWhere((r) => r.id == roomId);
     } catch (e) {
-      print('❌ Error creating room: $e');
-      throw Exception('Failed to create chat room: $e');
-    }
-  }
-
-  @override
-  Future<List<ChatMessage>> getMessages(String roomId) async {
-    try {
-      print('📥 Fetching messages for room: $roomId');
-
-      final response = await _supabase
-          .from('messages')
-          .select('''
-            *,
-            profiles:sender_id(username, avatar_url)
-          ''')
-          .eq('room_id', roomId)
-          .isFilter('deleted_at', null)
-          .order('created_at', ascending: false)
-          .limit(50);
-
-      final messages = (response as List)
-          .map((json) => ChatMessage.fromJson(json))
-          .toList();
-
-      print('✅ Fetched ${messages.length} messages');
-      return messages;
-    } catch (e) {
-      print('❌ Error fetching messages: $e');
-      throw Exception('Failed to fetch messages: $e');
+      debugPrint('❌ Error creating room: $e');
+      rethrow;
     }
   }
 
   @override
   Future<ChatMessage> sendMessage(String roomId, String content) async {
+    // Update my presence when sending
+    await updateMyPresence();
+    
+    final response = await _supabase.from('messages').insert({
+      'room_id': roomId,
+      'sender_id': _currentUserId,
+      'content': content,
+    }).select('''
+      *,
+      profiles:sender_id (username, avatar_url)
+    ''').single();
+
+    return ChatMessage.fromJson(response);
+  }
+
+  @override
+  Future<ChatMessage> sendFileMessage(String roomId, File file, {String? caption}) async {
+    debugPrint('📤 Sending file message to room: $roomId');
+    
+    await updateMyPresence();
+    
     try {
-      final currentUserId = _supabase.auth.currentUser?.id;
-      if (currentUserId == null) throw Exception('Not authenticated');
+      final fileName = path.basename(file.path);
+      final fileExt = path.extension(file.path).toLowerCase().replaceAll('.', '');
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final storagePath = '$roomId/${_currentUserId}_$timestamp.$fileExt';
 
-      print('📤 Sending message to room: $roomId');
+      String mediaType;
+      final imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
+      final videoExts = ['mp4', 'mov', 'webm', 'avi', '3gp'];
+      final audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+      if (imageExts.contains(fileExt)) {
+        mediaType = 'image';
+      } else if (videoExts.contains(fileExt)) {
+        mediaType = 'video';
+      } else if (fileExt == 'pdf') {
+        mediaType = 'pdf';
+      } else if (['doc', 'docx'].contains(fileExt)) {
+        mediaType = 'document';
+      } else if (['xls', 'xlsx'].contains(fileExt)) {
+        mediaType = 'spreadsheet';
+      } else if (['ppt', 'pptx'].contains(fileExt)) {
+        mediaType = 'presentation';
+      } else if (audioExts.contains(fileExt)) {
+        mediaType = 'audio';
+      } else {
+        mediaType = 'file';
+      }
 
-      final response = await _supabase
-          .from('messages')
-          .insert({
-            'room_id': roomId,
-            'sender_id': currentUserId,
-            'content': content.trim(),
-            'status': 'sent',
-          })
-          .select('''
-            *,
-            profiles:sender_id(username, avatar_url)
-          ''')
-          .single();
+      debugPrint('📤 Uploading: $storagePath (type: $mediaType)');
 
-      print('✅ Message sent');
+      await _supabase.storage.from('chat-images').uploadBinary(
+        storagePath,
+        await file.readAsBytes(),
+        fileOptions: FileOptions(contentType: _getMimeType(fileExt)),
+      );
+
+      final mediaUrl = _supabase.storage.from('chat-images').getPublicUrl(storagePath);
+
+      final response = await _supabase.from('messages').insert({
+        'room_id': roomId,
+        'sender_id': _currentUserId,
+        'content': caption ?? '',
+        'media_url': mediaUrl,
+        'media_type': mediaType,
+        'file_name': fileName,
+      }).select('''
+        *,
+        profiles:sender_id (username, avatar_url)
+      ''').single();
+
+      debugPrint('✅ File message sent');
       return ChatMessage.fromJson(response);
     } catch (e) {
-      print('❌ Error sending message: $e');
-      throw Exception('Failed to send message: $e');
+      debugPrint('❌ Error sending file: $e');
+      rethrow;
     }
   }
 
-  // ✅ FIXED: Simplified stream without async issues
+  String _getMimeType(String ext) {
+    final mimeTypes = {
+      'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png',
+      'gif': 'image/gif', 'webp': 'image/webp', 'bmp': 'image/bmp',
+      'mp4': 'video/mp4', 'mov': 'video/quicktime', 'webm': 'video/webm',
+      'avi': 'video/x-msvideo', '3gp': 'video/3gpp',
+      'pdf': 'application/pdf',
+      'doc': 'application/msword',
+      'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'xls': 'application/vnd.ms-excel',
+      'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'ppt': 'application/vnd.ms-powerpoint',
+      'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'txt': 'text/plain', 'csv': 'text/csv',
+      'zip': 'application/zip',
+      'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+      'm4a': 'audio/mp4', 'aac': 'audio/aac',
+    };
+    return mimeTypes[ext] ?? 'application/octet-stream';
+  }
+
   @override
   Stream<List<ChatMessage>> streamMessages(String roomId) {
-    print('👂 Streaming messages in room: $roomId');
+    debugPrint('👂 Streaming messages in room: $roomId');
+    final controller = StreamController<List<ChatMessage>>();
 
-    // Use a StreamController to handle async operations properly
-    final controller = StreamController<List<ChatMessage>>.broadcast();
+    _fetchMessages(roomId).then((messages) {
+      if (!controller.isClosed) {
+        controller.add(messages);
+      }
+    });
 
-    final subscription = _supabase
-        .from('messages')
-        .stream(primaryKey: ['id'])
-        .eq('room_id', roomId)
-        .order('created_at', ascending: false)
-        .listen((data) async {
-          try {
-            if (data.isEmpty) {
-              controller.add(<ChatMessage>[]);
-              return;
-            }
-
-            // Fetch messages with profile data
-            final messageIds = data.map((msg) => msg['id']).toList();
-
-            final fullMessages = await _supabase
-                .from('messages')
-                .select('''
-                  *,
-                  profiles:sender_id(username, avatar_url)
-                ''')
-                .inFilter('id', messageIds)
-                .isFilter('deleted_at', null)
-                .order('created_at', ascending: false);
-
-            final messages = (fullMessages as List)
-                .map((json) => ChatMessage.fromJson(json))
-                .toList();
-
-            print('📨 Stream emitting ${messages.length} messages');
-            controller.add(messages);
-          } catch (e) {
-            print('❌ Error in stream: $e');
-            controller.addError(e);
-          }
-        }, onError: (error) {
-          print('❌ Stream error: $error');
-          controller.addError(error);
-        });
+    final channel = _supabase
+        .channel('messages:$roomId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'messages',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'room_id',
+            value: roomId,
+          ),
+          callback: (payload) {
+            debugPrint('📩 Message change: ${payload.eventType}');
+            _fetchMessages(roomId).then((messages) {
+              if (!controller.isClosed) {
+                controller.add(messages);
+              }
+            });
+          },
+        )
+        .subscribe();
 
     controller.onCancel = () {
-      print('🛑 Stream cancelled');
-      subscription.cancel();
+      debugPrint('🛑 Stream cancelled');
+      channel.unsubscribe();
     };
 
     return controller.stream;
+  }
+
+  Future<List<ChatMessage>> _fetchMessages(String roomId) async {
+    final response = await _supabase
+        .from('messages')
+        .select('''
+          *,
+          profiles:sender_id (username, avatar_url)
+        ''')
+        .eq('room_id', roomId)
+        .order('created_at', ascending: false)
+        .limit(100);
+
+    return (response as List).map((json) => ChatMessage.fromJson(json)).toList();
+  }
+
+  @override
+  Future<void> editMessage(String messageId, String newContent) async {
+    debugPrint('✏️ Editing message: $messageId');
+    try {
+      await _supabase
+          .from('messages')
+          .update({
+            'content': newContent,
+            'is_edited': true,
+            'edited_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', messageId)
+          .eq('sender_id', _currentUserId);
+      debugPrint('✅ Message edited');
+    } catch (e) {
+      debugPrint('❌ Error editing message: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> deleteMessage(String messageId) async {
+    debugPrint('🗑️ Deleting message: $messageId');
+    try {
+      await _supabase
+          .from('messages')
+          .update({
+            'is_deleted': true,
+            'deleted_at': DateTime.now().toIso8601String(),
+          })
+          .eq('id', messageId)
+          .eq('sender_id', _currentUserId);
+      debugPrint('✅ Message deleted');
+    } catch (e) {
+      debugPrint('❌ Error deleting message: $e');
+      rethrow;
+    }
+  }
+
+  @override
+Future<void> markMessagesAsRead(String roomId) async {
+  debugPrint('👁️ Marking messages as read in room: $roomId');
+  try {
+    // First, get all unread messages from others in this room
+    final unreadMessages = await _supabase
+        .from('messages')
+        .select('id')
+        .eq('room_id', roomId)
+        .neq('sender_id', _currentUserId)  // Messages FROM others
+        .eq('is_read', false)               // That are unread
+        .eq('is_deleted', false);
+    
+    final count = (unreadMessages as List).length;
+    debugPrint('📝 Found $count unread messages to mark as read');
+    
+    if (count == 0) {
+      debugPrint('✅ No unread messages');
+      return;
+    }
+    
+    // Update all unread messages from others to read
+    final result = await _supabase
+        .from('messages')
+        .update({
+          'is_read': true,
+          'read_at': DateTime.now().toIso8601String(),
+        })
+        .eq('room_id', roomId)
+        .neq('sender_id', _currentUserId)
+        .eq('is_read', false)
+        .select();
+    
+    debugPrint('✅ Marked ${(result as List).length} messages as read');
+  } catch (e) {
+    debugPrint('❌ Error marking as read: $e');
+    // Don't rethrow - we don't want to break the app if this fails
+  }
+}
+
+  @override
+  Future<void> setTypingIndicator(String roomId, bool isTyping) async {
+    try {
+      if (isTyping) {
+        await _supabase.from('typing_indicators').upsert({
+          'room_id': roomId,
+          'user_id': _currentUserId,
+          'is_typing': true,
+          'started_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'room_id,user_id');
+      } else {
+        await _supabase
+            .from('typing_indicators')
+            .delete()
+            .eq('room_id', roomId)
+            .eq('user_id', _currentUserId);
+      }
+    } catch (e) {
+      debugPrint('❌ Error setting typing: $e');
+    }
+  }
+
+  @override
+  Stream<List<String>> streamTypingUsers(String roomId) {
+    debugPrint('👂 Streaming typing indicators for room: $roomId');
+    final controller = StreamController<List<String>>();
+
+    _fetchTypingUsers(roomId).then((users) {
+      if (!controller.isClosed) {
+        controller.add(users);
+      }
+    });
+
+    final channel = _supabase
+        .channel('typing:$roomId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'typing_indicators',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'room_id',
+            value: roomId,
+          ),
+          callback: (payload) {
+            debugPrint('⌨️ Typing change detected');
+            _fetchTypingUsers(roomId).then((users) {
+              if (!controller.isClosed) {
+                controller.add(users);
+              }
+            });
+          },
+        )
+        .subscribe();
+
+    controller.onCancel = () {
+      channel.unsubscribe();
+    };
+
+    return controller.stream;
+  }
+
+  Future<List<String>> _fetchTypingUsers(String roomId) async {
+    try {
+      final response = await _supabase
+          .from('typing_indicators')
+          .select('user_id, profiles(username)')
+          .eq('room_id', roomId)
+          .eq('is_typing', true)
+          .neq('user_id', _currentUserId)
+          .gt('started_at', DateTime.now().subtract(const Duration(seconds: 10)).toIso8601String());
+
+      final users = (response as List)
+          .map((r) => r['profiles']?['username'] as String? ?? 'Someone')
+          .toList();
+      debugPrint('⌨️ Typing users found: $users');
+      return users;
+    } catch (e) {
+      debugPrint('⚠️ Error fetching typing users: $e');
+      return [];
+    }
+  }
+
+  // ============================================================
+  // PRESENCE / LAST SEEN
+  // ============================================================
+  @override
+  Future<void> updateMyPresence() async {
+    try {
+      await _supabase
+          .from('profiles')
+          .update({
+            'last_seen': DateTime.now().toIso8601String(),
+            'is_online': true,
+          })
+          .eq('id', _currentUserId);
+    } catch (e) {
+      debugPrint('❌ Error updating presence: $e');
+    }
+  }
+
+  @override
+  Stream<Map<String, dynamic>> streamUserPresence(String userId) {
+    debugPrint('👂 Streaming presence for user: $userId');
+    final controller = StreamController<Map<String, dynamic>>();
+
+    // Initial fetch
+    _fetchUserPresence(userId).then((data) {
+      if (!controller.isClosed && data != null) {
+        controller.add(data);
+      }
+    });
+
+    // Subscribe to changes
+    final channel = _supabase
+        .channel('presence:$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'profiles',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: userId,
+          ),
+          callback: (payload) {
+            debugPrint('👤 Presence change for $userId');
+            if (!controller.isClosed) {
+              controller.add({
+                'last_seen': payload.newRecord['last_seen'],
+                'is_online': payload.newRecord['is_online'],
+              });
+            }
+          },
+        )
+        .subscribe();
+
+    controller.onCancel = () {
+      channel.unsubscribe();
+    };
+
+    return controller.stream;
+  }
+
+  Future<Map<String, dynamic>?> _fetchUserPresence(String userId) async {
+    try {
+      final response = await _supabase
+          .from('profiles')
+          .select('last_seen, is_online')
+          .eq('id', userId)
+          .maybeSingle();
+      return response;
+    } catch (e) {
+      debugPrint('❌ Error getting presence: $e');
+      return null;
+    }
   }
 }

@@ -15,4 +15,8 @@ class ImageConstant {
 
   // Custom Image View Screen
   static String imgImageNotFound = '${_basePath}image_not_found.png';
+
+  static String imgCreateGroup = '${_basePath}group_chat.png';
+  static String imgGroupCreatedSuccessfully = '${_basePath}check.png';
+  static String imgJoinGroup = '${_basePath}join_group.png';
 }

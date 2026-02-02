@@ -1,12 +1,17 @@
 // lib/features/chat/views/chat_list_page.dart
+
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/app_export.dart';
+// import '../../../core/providers/theme_provider.dart';
 import '../viewmodels/chat_list_viewmodel.dart';
 import '../data/repositories/chat_repository_impl.dart';
 import '../data/datasources/chat_remote_data_source.dart';
 import 'chat_room_page.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import 'select_user_page.dart';
+import 'package:intl/intl.dart';
+import './create_group_page.dart';
+import './join_group_page.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});
@@ -24,13 +29,24 @@ class ChatListPage extends StatelessWidget {
   }
 }
 
-class _ChatListPageContent extends StatelessWidget {
+// ============================================================
+// CHANGED: StatefulWidget so we can use 'mounted'
+// ============================================================
+class _ChatListPageContent extends StatefulWidget {
   const _ChatListPageContent();
 
   @override
+  State<_ChatListPageContent> createState() => _ChatListPageContentState();
+}
+
+class _ChatListPageContentState extends State<_ChatListPageContent> {
+  @override
   Widget build(BuildContext context) {
+    // final isDark = context.watch<ThemeProvider>().isDarkMode;
+    final isDark = false;
+
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: isDark ? const Color(0xFF121212) : appTheme.white_A700,
       appBar: AppBar(
         title: Text(
           'Messages',
@@ -39,13 +55,36 @@ class _ChatListPageContent extends StatelessWidget {
             color: Colors.white,
           ),
         ),
-        backgroundColor: appTheme.blue_900,
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : appTheme.blue_900,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add_comment),
+            icon: const Icon(Icons.group_add),
             onPressed: () {
               // Navigate to user selection
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateGroupPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.group),
+            onPressed: () {
+              // Navigate to user selection
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const JoinGroupPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.add_comment),
+            onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -55,11 +94,10 @@ class _ChatListPageContent extends StatelessWidget {
             },
           ),
         ],
-        
       ),
       body: Consumer<ChatListViewModel>(
         builder: (context, viewModel, _) {
-          if (viewModel.isLoading) {
+          if (viewModel.isLoading && viewModel.chatRooms.isEmpty) {
             return Center(
               child: CircularProgressIndicator(color: appTheme.blue_900),
             );
@@ -70,11 +108,13 @@ class _ChatListPageContent extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
                   const SizedBox(height: 16),
                   Text(
                     viewModel.errorMessage ?? 'Failed to load chats',
-                    style: TextStyleHelper.instance.body15MediumInter,
+                    style: TextStyleHelper.instance.body15MediumInter.copyWith(
+                      color: isDark ? Colors.white : null,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -88,7 +128,7 @@ class _ChatListPageContent extends StatelessWidget {
           }
 
           if (viewModel.chatRooms.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(isDark);
           }
 
           return RefreshIndicator(
@@ -98,11 +138,11 @@ class _ChatListPageContent extends StatelessWidget {
               itemCount: viewModel.chatRooms.length,
               separatorBuilder: (context, index) => Divider(
                 height: 1,
-                color: appTheme.blue_gray_100,
+                color: isDark ? Colors.grey[800] : appTheme.blue_gray_100,
               ),
               itemBuilder: (context, index) {
                 final room = viewModel.chatRooms[index];
-                return _buildChatItem(context, room);
+                return _buildChatItem(context, room, isDark, viewModel);
               },
             ),
           );
@@ -111,7 +151,7 @@ class _ChatListPageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(bool isDark) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -119,18 +159,20 @@ class _ChatListPageContent extends StatelessWidget {
           Icon(
             Icons.chat_bubble_outline,
             size: 64,
-            color: appTheme.greyCustom,
+            color: isDark ? Colors.grey[400] : appTheme.greyCustom,
           ),
           const SizedBox(height: 16),
           Text(
             'No messages yet',
-            style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+            style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+              color: isDark ? Colors.white : null,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'Start a conversation!',
             style: TextStyleHelper.instance.body15MediumInter.copyWith(
-              color: appTheme.greyCustom,
+              color: isDark ? Colors.grey[400] : appTheme.greyCustom,
             ),
           ),
         ],
@@ -138,48 +180,76 @@ class _ChatListPageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildChatItem(BuildContext context, room) {
+  // Format time for chat list (Today: time, Yesterday, Weekday, or Date)
+  String _formatChatListTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final localTime = dateTime.toLocal();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(localTime.year, localTime.month, localTime.day);
+    final difference = today.difference(messageDate).inDays;
+
+    if (difference == 0) {
+      // Today - show time
+      return DateFormat('HH:mm').format(localTime);
+    } else if (difference == 1) {
+      // Yesterday
+      return 'Yesterday';
+    } else if (difference < 7) {
+      // This week - show day name
+      return DateFormat('EEE').format(localTime); // Mon, Tue, etc.
+    } else {
+      // Older - show date
+      return DateFormat('dd/MM/yy').format(localTime);
+    }
+  }
+
+  Widget _buildChatItem(BuildContext context, room, bool isDark, ChatListViewModel viewModel) {
     final hasUnread = room.unreadCount > 0;
-    final timeAgo = room.lastMessageTime != null
-        ? timeago.format(room.lastMessageTime!)
-        : '';
+    
+    // Format time correctly with local timezone
+    String timeDisplay = '';
+    if (room.lastMessageTime != null) {
+      timeDisplay = _formatChatListTime(room.lastMessageTime!);
+    }
 
     return ListTile(
+      tileColor: isDark ? const Color(0xFF121212) : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Stack(
         children: [
           CircleAvatar(
             radius: 28,
-            backgroundColor: appTheme.blue_gray_100,
-            child: room.displayAvatar.isNotEmpty
+            backgroundColor: isDark ? Colors.grey[800] : appTheme.blue_gray_100,
+            child: room.displayAvatar?.isNotEmpty == true
                 ? ClipOval(
                     child: Image.network(
-                      room.displayAvatar,
+                      room.displayAvatar!,
                       width: 56,
                       height: 56,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.person, size: 32, color: appTheme.greyCustom);
+                        return Icon(Icons.person, size: 32, color: isDark ? Colors.grey[400] : appTheme.greyCustom);
                       },
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
-                        return Icon(Icons.person, size: 32, color: appTheme.greyCustom);
+                        return Icon(Icons.person, size: 32, color: isDark ? Colors.grey[400] : appTheme.greyCustom);
                       },
                     ),
                   )
-                : Icon(Icons.person, size: 32, color: appTheme.greyCustom),
+                : Icon(Icons.person, size: 32, color: isDark ? Colors.grey[400] : appTheme.greyCustom),
           ),
-          if (hasUnread)
+          // Show green dot for ONLINE users
+          if (room.otherUserIsOnline)
             Positioned(
               right: 0,
-              top: 0,
+              bottom: 0,
               child: Container(
-                width: 12,
-                height: 12,
+                width: 14,
+                height: 14,
                 decoration: BoxDecoration(
                   color: Colors.green,
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
+                  border: Border.all(color: isDark ? const Color(0xFF121212) : Colors.white, width: 2),
                 ),
               ),
             ),
@@ -193,15 +263,16 @@ class _ChatListPageContent extends StatelessWidget {
               style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
                 fontSize: 16,
                 fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w400,
+                color: isDark ? Colors.white : null,
               ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (timeAgo.isNotEmpty)
+          if (timeDisplay.isNotEmpty)
             Text(
-              timeAgo,
+              timeDisplay,
               style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                color: hasUnread ? appTheme.blue_900 : appTheme.greyCustom,
+                color: hasUnread ? appTheme.blue_900 : (isDark ? Colors.grey[400] : appTheme.greyCustom),
                 fontWeight: hasUnread ? FontWeight.w600 : FontWeight.w400,
               ),
             ),
@@ -213,7 +284,7 @@ class _ChatListPageContent extends StatelessWidget {
             child: Text(
               room.lastMessage ?? 'No messages yet',
               style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                color: appTheme.greyCustom,
+                color: isDark ? Colors.grey[400] : appTheme.greyCustom,
                 fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
               ),
               maxLines: 1,
@@ -239,16 +310,25 @@ class _ChatListPageContent extends StatelessWidget {
             ),
         ],
       ),
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        // Navigate to chat room and WAIT for it to close
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ChatRoomPage(
               roomId: room.id,
               roomName: room.displayName,
+              otherUserId: room.otherUserId,
+              initialLastSeenText: room.lastSeenText,
+              initialIsOnline: room.otherUserIsOnline,
             ),
           ),
         );
+        // IMPORTANT: Refresh chat list when returning to update unread counts
+        // Now 'mounted' works because we're in a StatefulWidget
+        if (mounted) {
+          viewModel.refresh();
+        }
       },
     );
   }

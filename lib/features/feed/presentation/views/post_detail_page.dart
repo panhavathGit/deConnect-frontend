@@ -94,7 +94,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           shape: BoxShape.circle,
                           color: appTheme.blue_gray_100,
                         ),
-                        child: Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+                        // child: Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+                        child: ClipOval(
+                          child: widget.post.authorAvatar != null && widget.post.authorAvatar!.isNotEmpty
+                              ? CustomImageView(
+                                  imagePath: widget.post.authorAvatar,
+                                  fit: BoxFit.cover,
+                                )
+                              : Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+                        ),
                       ),
                       SizedBox(width: 12),
                       Expanded(
@@ -165,15 +173,15 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   SizedBox(height: 24),
 
                   // Comment Input Section
-                  Text(
-                    'Add a comment',
-                    style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
-                      fontSize: 16,
-                    ),
-                  ),
-                  SizedBox(height: 12),
-                  _buildCommentInput(),
-                  SizedBox(height: 100),
+                  // Text(
+                  //   'Add a comment',
+                  //   style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+                  //     fontSize: 16,
+                  //   ),
+                  // ),
+                  // SizedBox(height: 12),
+                  // _buildCommentInput(),
+                  // SizedBox(height: 100),
                 ],
               ),
             ),
