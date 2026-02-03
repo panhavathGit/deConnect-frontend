@@ -8,16 +8,9 @@ import '../../../core/widgets/custom_edit_text.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../auth/data/models/user_model.dart';
 import '../viewmodels/profile_viewmodel.dart';
+import '../../feed/presentation/viewmodels/user_info_viewmodel.dart';
+import '../../feed/presentation/viewmodels/feed_viewmodel.dart';
 import 'package:go_router/go_router.dart';
-
-// class EditProfilePage extends StatefulWidget {
-//   final User user;
-
-//   const EditProfilePage({super.key, required this.user});
-
-//   @override
-//   State<EditProfilePage> createState() => _EditProfilePageState();
-// }
 
 class EditProfilePage extends StatefulWidget {
   final User user;
@@ -163,6 +156,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
         // final viewModel = context.read<ProfileViewModel>();
         // await viewModel.updateProfile(updatedUser);
         await widget.viewModel.updateProfile(updatedUser);
+
+        // Reload UserInfoViewModel to update feed page header
+        final userInfoViewModel = context.read<UserInfoViewModel>();
+        await userInfoViewModel.loadUserInfo();
+
+        // Reload FeedViewModel to update author info on posts
+        final feedViewModel = context.read<FeedViewModel>();
+        await feedViewModel.loadPosts();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

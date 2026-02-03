@@ -11,6 +11,7 @@ import '../../features/feed/presentation/views/comments_page.dart';
 import '../../features/feed/data/models/feed_model.dart';
 import '../../features/auth/views/register_screen.dart';
 import '../../features/feed/presentation/views/create_post_page.dart';
+import '../../features/splash/splash_screen.dart';
 
 class AppRouter {
 
@@ -22,25 +23,39 @@ class AppRouter {
     debugLogDiagnostics: true,
     
     // Initial location
-    initialLocation: '/login',
+    initialLocation: '/splash',
     
-    // Global redirect logic for authentication
-    redirect: (BuildContext context, GoRouterState state) {
+    // Global redirect logic for authentication (no splash screen version)
+    // redirect: (BuildContext context, GoRouterState state) {
 
+    //   if(_bypassAuth) return null;
+
+    //   final isLoggedIn = SupabaseService.client.auth.currentUser != null;
+    //   final isGoingToLogin = state.matchedLocation == '/login';
+    //   final isGoingToRegister = state.matchedLocation == '/register';
+
+    //   // If user is not logged in and not going to auth pages, redirect to login
+    //   if (!isLoggedIn && !isGoingToLogin && !isGoingToRegister) {
+    //     return '/login';
+    //   }
+
+    //   // If user is logged in and going to auth pages, redirect to main
+    //   if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
+    //     return '/main';
+    //   }
+
+    //   // No redirect needed
+    //   return null;
+    // },
+
+    // Global redirect logic for authentication (with splash screen)
+    redirect: (BuildContext context, GoRouterState state) {
       if(_bypassAuth) return null;
 
-      // final isLoggedIn = SupabaseService.client.auth.currentUser != null;
-      // final isGoingToLogin = state.matchedLocation == '/login';
-
-      // // If user is not logged in and not going to login, redirect to login
-      // if (!isLoggedIn && !isGoingToLogin) {
-      //   return '/login';
-      // }
-
-      // // If user is logged in and going to login, redirect to main
-      // if (isLoggedIn && isGoingToLogin) {
-      //   return '/main';
-      // }
+      // IMPORTANT: Don't redirect if going to splash screen
+      if (state.matchedLocation == '/splash') {
+        return null; // Allow splash screen to show
+      }
 
       final isLoggedIn = SupabaseService.client.auth.currentUser != null;
       final isGoingToLogin = state.matchedLocation == '/login';
@@ -60,7 +75,16 @@ class AppRouter {
       return null;
     },
 
+
     routes: [
+      //splash route
+      GoRoute(
+        path: '/splash',
+        name: 'splash',
+        pageBuilder: (context, state) => const NoTransitionPage(
+          child: SplashScreen(),
+        ),
+      ),
       // Auth Routes
       GoRoute(
         path: '/login',

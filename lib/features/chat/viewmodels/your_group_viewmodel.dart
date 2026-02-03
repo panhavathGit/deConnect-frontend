@@ -24,7 +24,8 @@ class YourGroupsViewModel extends ChangeNotifier {
 
     try {
       _groups = await repository.getMyGroups();
-      _errorMessage = null;
+      // _errorMessage = null;
+       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Failed to load groups: ${e.toString()}';
       debugPrint('❌ Error loading groups: $e');

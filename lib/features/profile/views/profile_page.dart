@@ -13,6 +13,8 @@ import 'widgets/profile_loading_state.dart';
 import 'widgets/profile_error_state.dart';
 import 'package:go_router/go_router.dart';
 import '../../profile/views/edit_profile_page.dart';
+import '../../feed/data/models/feed_model.dart';
+import './edit_post_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -118,30 +120,77 @@ class _ProfilePageContent extends StatelessWidget {
     );
   }
 
+  // List<Widget> _buildPostsList(BuildContext context, List<dynamic> posts) {
+  //   return posts.map((post) => Padding(
+  //     padding: EdgeInsets.only(bottom: 20),
+  //     child: ProfilePostItem(
+  //       post: post,
+  //       onTap: () => context.push('/main/post/${post.id}', extra: post),
+  //     ),
+  //   )).toList();
+  // }
+
   List<Widget> _buildPostsList(BuildContext context, List<dynamic> posts) {
     return posts.map((post) => Padding(
       padding: EdgeInsets.only(bottom: 20),
       child: ProfilePostItem(
         post: post,
         onTap: () => context.push('/main/post/${post.id}', extra: post),
+        onEdit: () => _handleEditPost(context, post),
+        onDelete: () => _handleDeletePost(context, post),
       ),
     )).toList();
   }
 
-  // void _handleEditProfile(BuildContext context) {
-  //   // TODO: Navigate to edit profile screen
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text('Edit Profile - Coming Soon')),
-  //   );
-  // }
+  void _handleEditPost(BuildContext context, FeedPost post) {
+    final viewModel = context.read<ProfileViewModel>();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditPostPage(
+          post: post,
+          viewModel: viewModel,
+        ),
+      ),
+    );
+  }
 
-  // The EditProfilePage can't access ProfileViewModel because it's in a different route context. You need to pass the viewModel directly.
-  // void _handleEditProfile(BuildContext context) {
-  //   final viewModel = context.read<ProfileViewModel>();
-  //   if (viewModel.user != null) {
-  //     context.push('/profile/edit-profile', extra: viewModel.user);
-  //   }
-  // }
+  void _handleDeletePost(BuildContext context, FeedPost post) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Post'),
+        content: Text('Are you sure you want to delete this post? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true && context.mounted) {
+      final viewModel = context.read<ProfileViewModel>();
+      final success = await viewModel.deletePost(post.id);
+      
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success ? 'Post deleted successfully' : 'Failed to delete post'),
+            backgroundColor: success ? appTheme.greenCustom : Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   void _handleEditProfile(BuildContext context) {
     final viewModel = context.read<ProfileViewModel>();
