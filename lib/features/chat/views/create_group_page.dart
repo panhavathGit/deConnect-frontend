@@ -1,6 +1,7 @@
 // lib/features/chat/views/create_group_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:onboarding_project/features/chat/viewmodels/your_group_viewmodel.dart';
 import 'package:provider/provider.dart';
 import '../../../core/app_export.dart';
 import '../../../core/widgets/custom_button.dart';
@@ -15,6 +16,8 @@ class CreateGroupPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+  // I update to use multiprovider here because we need to use loadgroup from your_group_viewmodel
+  // so it will automatically reload the list of group when navigate from the success screen
     return ChangeNotifierProvider(
       create: (_) => CreateGroupViewModel(
         repository: ChatRepositoryImpl(
@@ -24,6 +27,26 @@ class CreateGroupPage extends StatelessWidget {
       child: const _CreateGroupPageContent(),
     );
   }
+  // return MultiProvider(
+  //     providers: [
+  //       ChangeNotifierProvider(
+  //         create: (_) => CreateGroupViewModel(
+  //           repository: ChatRepositoryImpl(
+  //             remoteDataSource: ChatRemoteDataSourceImpl(),
+  //           ),
+  //         ),
+  //       ),
+  //       ChangeNotifierProvider(
+  //         create: (_) => YourGroupsViewModel(
+  //           repository: ChatRepositoryImpl(
+  //             remoteDataSource: ChatRemoteDataSourceImpl(),
+  //           ),
+  //         ),
+  //       ),
+  //     ],
+  //     child: const _CreateGroupPageContent(),
+  //   );
+  // }
 }
 
 class _CreateGroupPageContent extends StatefulWidget {
@@ -54,6 +77,13 @@ class _CreateGroupPageContentState extends State<_CreateGroupPageContent> {
     if (!mounted) return;
 
     if (success && viewModel.createdGroup != null) {
+      
+      // Reload groups list
+      // final yourGroupsViewModel = context.read<YourGroupsViewModel>();
+      // await yourGroupsViewModel.loadGroups();
+      // print('Groups loaded: ${yourGroupsViewModel.groups.length}');
+      // print('Groups: ${yourGroupsViewModel.groups}');
+
       // Navigate to success screen
       Navigator.pushReplacement(
         context,
@@ -64,6 +94,8 @@ class _CreateGroupPageContentState extends State<_CreateGroupPageContent> {
           ),
         ),
       );
+      
+     
     } else {
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(

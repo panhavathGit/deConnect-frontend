@@ -130,7 +130,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
             backgroundColor: appTheme.greenCustom,
           ),
         );
+        
+        // re-load post on feed page, so it get new post as soon as new post added
         context.read<FeedViewModel>().loadPosts();
+
         context.pop();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(

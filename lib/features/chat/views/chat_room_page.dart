@@ -1,7 +1,5 @@
 // lib/features/chat/views/chat_room_page.dart
 
-// COMPLETE: Edit, Delete, Read Receipts, Typing Indicator, Video Recording + DARK MODE + DATE SEPARATORS + LAST SEEN
-
 import 'dart:io';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +17,7 @@ import '../viewmodels/chat_room_viewmodel.dart';
 import '../data/repositories/chat_repository_impl.dart';
 import '../data/datasources/chat_remote_data_source.dart';
 import '../data/models/message_model.dart';
+import 'group_info_page.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String roomId;
@@ -710,6 +709,26 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
           ),
           backgroundColor: isDark ? const Color(0xFF1E1E1E) : appTheme.blue_900,
           foregroundColor: Colors.white,
+          // ADD THIS ACTIONS PARAMETER
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.info_outline),
+              onPressed: () {
+                // You'll need to import the GroupInfoPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupInfoPage(
+                      roomId: widget.roomId,
+                      roomName: widget.roomName,
+                      avatarUrl: null, // You can pass this if available
+                      isAdmin: false, // You'll need to pass the actual admin status
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         body: Column(
           children: [
