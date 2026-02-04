@@ -3,14 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/routes/app_router.dart';
 import 'core/services/supabase_service.dart';
-import 'features/auth/viewmodels/auth_viewmodel.dart';
+import 'features/auth/presentation/viewmodels/auth_viewmodel.dart';
 import 'features/feed/presentation/viewmodels/feed_viewmodel.dart';
 import 'features/feed/data/datasources/feed_remote_data_source.dart';
 import 'features/feed/data/datasources/feed_mock_data_source.dart';
-import 'features/chat/viewmodels/chat_list_viewmodel.dart';
+import 'features/chat/presentation/viewmodels/chat_list_viewmodel.dart';
 import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/presentation/viewmodels/user_info_viewmodel.dart';
-
+import './features/chat/data/repositories/chat_repository_impl.dart';
+import './features/chat/data/datasources/chat_remote_data_source.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseService.initialize();
@@ -18,12 +19,16 @@ Future<void> main() async {
   // Initialize data sources
   final feedRemoteDataSource = FeedRemoteDataSourceImpl();
   final feedMockDataSource = FeedMockDataSourceImpl();
+  final chatRemoteDataSource = ChatRemoteDataSourceImpl();
 
   // Initialize repository
   final feedRepository = FeedRepositoryImpl(
     remoteDataSource: feedRemoteDataSource,
     mockDataSource: feedMockDataSource,
     useMockData: false, // Toggle this when you have real backend
+  );
+  final chatRepository = ChatRepositoryImpl(
+    remoteDataSource: chatRemoteDataSource,
   );
 
   runApp(
@@ -33,6 +38,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => UserInfoViewModel()), 
         ChangeNotifierProvider(
           create: (_) => FeedViewModel(repository: feedRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ChatListViewModel(repository: chatRepository),
         ),
         // ChangeNotifierProvider(create: (_) => ChatViewModel()),
       ],

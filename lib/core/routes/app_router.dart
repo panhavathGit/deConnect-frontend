@@ -1,15 +1,15 @@
 // lib/core/routes/app_router.dart
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/auth/views/login_screen.dart';
+import '../../features/auth/presentation/views/login_screen.dart';
 import '../../features/feed/presentation/views/feed_page.dart';
-import '../../features/profile/views/profile_page.dart';
-import '../../features/chat/views/chat_list_page.dart';
+import '../../features/profile/presentation/views/profile_page.dart';
+import '../../features/chat/presentation/views/chat_list_page.dart';
 import '../services/supabase_service.dart';
 import '../../features/feed/presentation/views/post_detail_page.dart';
 import '../../features/feed/presentation/views/comments_page.dart';
 import '../../features/feed/data/models/feed_model.dart';
-import '../../features/auth/views/register_screen.dart';
+import '../../features/auth/presentation/views/register_screen.dart';
 import '../../features/feed/presentation/views/create_post_page.dart';
 import '../../features/splash/splash_screen.dart';
 

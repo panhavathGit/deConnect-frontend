@@ -1,5 +1,4 @@
 // lib/features/chat/data/models/message_model.dart
-// UPDATED: Edit, Delete, Read Receipts, File Types
 
 class ChatMessage {
   final String id;

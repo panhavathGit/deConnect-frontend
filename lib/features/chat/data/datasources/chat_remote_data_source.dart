@@ -477,44 +477,44 @@ Future<List<ChatRoom>> getChatRooms() async {
   }
 
   @override
-Future<void> markMessagesAsRead(String roomId) async {
-  debugPrint('👁️ Marking messages as read in room: $roomId');
-  try {
-    // First, get all unread messages from others in this room
-    final unreadMessages = await _supabase
-        .from('messages')
-        .select('id')
-        .eq('room_id', roomId)
-        .neq('sender_id', _currentUserId)  // Messages FROM others
-        .eq('is_read', false)               // That are unread
-        .eq('is_deleted', false);
-    
-    final count = (unreadMessages as List).length;
-    debugPrint('📝 Found $count unread messages to mark as read');
-    
-    if (count == 0) {
-      debugPrint('✅ No unread messages');
-      return;
+  Future<void> markMessagesAsRead(String roomId) async {
+    debugPrint('👁️ Marking messages as read in room: $roomId');
+    try {
+      // First, get all unread messages from others in this room
+      final unreadMessages = await _supabase
+          .from('messages')
+          .select('id')
+          .eq('room_id', roomId)
+          .neq('sender_id', _currentUserId)  // Messages FROM others
+          .eq('is_read', false)               // That are unread
+          .eq('is_deleted', false);
+      
+      final count = (unreadMessages as List).length;
+      debugPrint('📝 Found $count unread messages to mark as read');
+      
+      if (count == 0) {
+        debugPrint('✅ No unread messages');
+        return;
+      }
+      
+      // Update all unread messages from others to read
+      final result = await _supabase
+          .from('messages')
+          .update({
+            'is_read': true,
+            'read_at': DateTime.now().toIso8601String(),
+          })
+          .eq('room_id', roomId)
+          .neq('sender_id', _currentUserId)
+          .eq('is_read', false)
+          .select();
+      
+      debugPrint('✅ Marked ${(result as List).length} messages as read');
+    } catch (e) {
+      debugPrint('❌ Error marking as read: $e');
+      // Don't rethrow - we don't want to break the app if this fails
     }
-    
-    // Update all unread messages from others to read
-    final result = await _supabase
-        .from('messages')
-        .update({
-          'is_read': true,
-          'read_at': DateTime.now().toIso8601String(),
-        })
-        .eq('room_id', roomId)
-        .neq('sender_id', _currentUserId)
-        .eq('is_read', false)
-        .select();
-    
-    debugPrint('✅ Marked ${(result as List).length} messages as read');
-  } catch (e) {
-    debugPrint('❌ Error marking as read: $e');
-    // Don't rethrow - we don't want to break the app if this fails
   }
-}
 
   @override
   Future<void> setTypingIndicator(String roomId, bool isTyping) async {
@@ -674,7 +674,7 @@ Future<void> markMessagesAsRead(String roomId) async {
     }
   }
 
-    // ============================================================
+  // ============================================================
   // GROUP CHAT METHODS
   // ============================================================
   

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../core/app_export.dart';
 import 'feed/presentation/views/feed_page.dart';
-import 'chat/views/chat_list_page.dart';
-import 'profile/views/profile_page.dart';
+import 'chat/presentation/views/chat_list_page.dart';
+import 'profile/presentation/views/profile_page.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
