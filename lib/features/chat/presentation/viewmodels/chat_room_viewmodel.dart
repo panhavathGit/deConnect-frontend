@@ -101,14 +101,14 @@ class ChatRoomViewModel extends ChangeNotifier {
       );
       
       // Stream presence
-      if (otherUserId != null) {
-        await _presenceSubscription?.cancel();
-        _presenceSubscription = repository.streamUserPresence(otherUserId!).listen(
-          (data) {
-            _updatePresenceStatus(data);
-          },
-        );
-      }
+      // if (otherUserId != null) {
+      //   await _presenceSubscription?.cancel();
+      //   _presenceSubscription = repository.streamUserPresence(otherUserId!).listen(
+      //     (data) {
+      //       _updatePresenceStatus(data);
+      //     },
+      //   );
+      // }
 
       _status = ChatRoomStatus.success;
       notifyListeners();

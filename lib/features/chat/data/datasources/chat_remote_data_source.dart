@@ -20,9 +20,10 @@ abstract class ChatRemoteDataSource {
   Future<void> markMessagesAsRead(String roomId);
   Future<void> setTypingIndicator(String roomId, bool isTyping);
   Stream<List<String>> streamTypingUsers(String roomId);
-  // Presence
-  Stream<Map<String, dynamic>> streamUserPresence(String userId);
-  Future<void> updateMyPresence();
+
+  // // Presence
+  // Stream<Map<String, dynamic>> streamUserPresence(String userId);
+  // Future<void> updateMyPresence();
 
   // Group Chat Methods
   Future<CreateGroupResponse> createGroup(String name, {String? description});
@@ -40,8 +41,8 @@ class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
 Future<List<ChatRoom>> getChatRooms() async {
   debugPrint('📥 Fetching chat rooms for user: $_currentUserId');
   
-  // Update my presence when fetching chats
-  updateMyPresence(); // Don't await - fire and forget
+  // // Update my presence when fetching chats
+  // updateMyPresence(); // Don't await - fire and forget
   
   // OPTIMIZED: Single query with all joins
   final response = await _supabase
@@ -283,7 +284,7 @@ Future<List<ChatRoom>> getChatRooms() async {
   @override
   Future<ChatMessage> sendMessage(String roomId, String content) async {
     // Update my presence when sending
-    await updateMyPresence();
+    // await updateMyPresence();
     
     final response = await _supabase.from('messages').insert({
       'room_id': roomId,
@@ -301,7 +302,7 @@ Future<List<ChatRoom>> getChatRooms() async {
   Future<ChatMessage> sendFileMessage(String roomId, File file, {String? caption}) async {
     debugPrint('📤 Sending file message to room: $roomId');
     
-    await updateMyPresence();
+    // await updateMyPresence();
     
     try {
       final fileName = path.basename(file.path);
@@ -599,80 +600,80 @@ Future<List<ChatRoom>> getChatRooms() async {
     }
   }
 
-  // ============================================================
-  // PRESENCE / LAST SEEN
-  // ============================================================
-  @override
-  Future<void> updateMyPresence() async {
-    try {
-      await _supabase
-          .from('profiles')
-          .update({
-            'last_seen': DateTime.now().toIso8601String(),
-            'is_online': true,
-          })
-          .eq('id', _currentUserId);
-    } catch (e) {
-      debugPrint('❌ Error updating presence: $e');
-    }
-  }
+  // // ============================================================
+  // // PRESENCE / LAST SEEN
+  // // ============================================================
+  // @override
+  // Future<void> updateMyPresence() async {
+  //   try {
+  //     await _supabase
+  //         .from('profiles')
+  //         .update({
+  //           'last_seen': DateTime.now().toIso8601String(),
+  //           'is_online': true,
+  //         })
+  //         .eq('id', _currentUserId);
+  //   } catch (e) {
+  //     debugPrint('❌ Error updating presence: $e');
+  //   }
+  // }
 
-  @override
-  Stream<Map<String, dynamic>> streamUserPresence(String userId) {
-    debugPrint('👂 Streaming presence for user: $userId');
-    final controller = StreamController<Map<String, dynamic>>();
+  // @override
+  // Stream<Map<String, dynamic>> streamUserPresence(String userId) {
+  //   debugPrint('👂 Streaming presence for user: $userId');
+  //   final controller = StreamController<Map<String, dynamic>>();
 
-    // Initial fetch
-    _fetchUserPresence(userId).then((data) {
-      if (!controller.isClosed && data != null) {
-        controller.add(data);
-      }
-    });
+  //   // Initial fetch
+  //   _fetchUserPresence(userId).then((data) {
+  //     if (!controller.isClosed && data != null) {
+  //       controller.add(data);
+  //     }
+  //   });
 
-    // Subscribe to changes
-    final channel = _supabase
-        .channel('presence:$userId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.update,
-          schema: 'public',
-          table: 'profiles',
-          filter: PostgresChangeFilter(
-            type: PostgresChangeFilterType.eq,
-            column: 'id',
-            value: userId,
-          ),
-          callback: (payload) {
-            debugPrint('👤 Presence change for $userId');
-            if (!controller.isClosed) {
-              controller.add({
-                'last_seen': payload.newRecord['last_seen'],
-                'is_online': payload.newRecord['is_online'],
-              });
-            }
-          },
-        )
-        .subscribe();
+  //   // Subscribe to changes
+  //   final channel = _supabase
+  //       .channel('presence:$userId')
+  //       .onPostgresChanges(
+  //         event: PostgresChangeEvent.update,
+  //         schema: 'public',
+  //         table: 'profiles',
+  //         filter: PostgresChangeFilter(
+  //           type: PostgresChangeFilterType.eq,
+  //           column: 'id',
+  //           value: userId,
+  //         ),
+  //         callback: (payload) {
+  //           debugPrint('👤 Presence change for $userId');
+  //           if (!controller.isClosed) {
+  //             controller.add({
+  //               'last_seen': payload.newRecord['last_seen'],
+  //               'is_online': payload.newRecord['is_online'],
+  //             });
+  //           }
+  //         },
+  //       )
+  //       .subscribe();
 
-    controller.onCancel = () {
-      channel.unsubscribe();
-    };
+  //   controller.onCancel = () {
+  //     channel.unsubscribe();
+  //   };
 
-    return controller.stream;
-  }
+  //   return controller.stream;
+  // }
 
-  Future<Map<String, dynamic>?> _fetchUserPresence(String userId) async {
-    try {
-      final response = await _supabase
-          .from('profiles')
-          .select('last_seen, is_online')
-          .eq('id', userId)
-          .maybeSingle();
-      return response;
-    } catch (e) {
-      debugPrint('❌ Error getting presence: $e');
-      return null;
-    }
-  }
+  // Future<Map<String, dynamic>?> _fetchUserPresence(String userId) async {
+  //   try {
+  //     final response = await _supabase
+  //         .from('profiles')
+  //         .select('last_seen, is_online')
+  //         .eq('id', userId)
+  //         .maybeSingle();
+  //     return response;
+  //   } catch (e) {
+  //     debugPrint('❌ Error getting presence: $e');
+  //     return null;
+  //   }
+  // }
 
   // ============================================================
   // GROUP CHAT METHODS

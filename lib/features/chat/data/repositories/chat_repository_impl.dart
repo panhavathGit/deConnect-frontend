@@ -55,9 +55,9 @@ class ChatRepositoryImpl implements ChatRepository {
   Stream<List<String>> streamTypingUsers(String roomId) =>
       remoteDataSource.streamTypingUsers(roomId);
 
-  @override
-  Stream<Map<String, dynamic>> streamUserPresence(String userId) =>
-      remoteDataSource.streamUserPresence(userId);
+  // @override
+  // Stream<Map<String, dynamic>> streamUserPresence(String userId) =>
+  //     remoteDataSource.streamUserPresence(userId);
 
   // Group Chat Methods
   @override

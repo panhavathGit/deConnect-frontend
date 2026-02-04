@@ -237,11 +237,27 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
   }
 
   Future<void> _openFile(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (mounted) {
-      _showSnackBar('Could not open file', Colors.red);
+    try {
+      final uri = Uri.parse(url);
+      
+      // Try external application first
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        // Fallback to platform default
+        await launchUrl(
+          uri,
+          mode: LaunchMode.platformDefault,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error opening file: $e');
+      if (mounted) {
+        _showSnackBar('Could not open file. Error: ${e.toString()}', Colors.red);
+      }
     }
   }
 
@@ -288,6 +304,7 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                 widget.roomName,
                 style: const TextStyle(color: Colors.white, fontSize: 18),
               ),
+              // DISABLED: Online/Last seen status
               AnimatedSwitcher(
                 duration: ChatConfig.typingAnimationDuration,
                 child: viewModel.isOtherUserTyping
@@ -307,18 +324,20 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
                           ),
                         ],
                       )
-                    : viewModel.otherUserStatus.isNotEmpty
-                        ? Text(
-                            key: const ValueKey('lastseen'),
-                            viewModel.otherUserStatus,
-                            style: TextStyle(
-                              color: viewModel.isOtherUserOnline
-                                  ? Colors.greenAccent
-                                  : Colors.white70,
-                              fontSize: 13,
-                            ),
-                          )
-                        : const SizedBox.shrink(key: ValueKey('empty')),
+                    : const SizedBox.shrink(key: ValueKey('empty')),
+                    // DISABLED: Last seen/online status display
+                    // : viewModel.otherUserStatus.isNotEmpty
+                    //     ? Text(
+                    //         key: const ValueKey('lastseen'),
+                    //         viewModel.otherUserStatus,
+                    //         style: TextStyle(
+                    //           color: viewModel.isOtherUserOnline
+                    //               ? Colors.greenAccent
+                    //               : Colors.white70,
+                    //           fontSize: 13,
+                    //         ),
+                    //       )
+                    //     : const SizedBox.shrink(key: ValueKey('empty')),
               ),
             ],
           );

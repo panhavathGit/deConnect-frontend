@@ -15,7 +15,8 @@ abstract class ChatRepository {
   Future<void> markMessagesAsRead(String roomId);
   Future<void> setTypingIndicator(String roomId, bool isTyping);
   Stream<List<String>> streamTypingUsers(String roomId);
-  Stream<Map<String, dynamic>> streamUserPresence(String userId);
+
+  // Stream<Map<String, dynamic>> streamUserPresence(String userId);
   
   // Group Chat Methods
   Future<CreateGroupResponse> createGroup(String name, {String? description});
