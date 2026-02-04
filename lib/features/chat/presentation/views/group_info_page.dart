@@ -6,8 +6,8 @@ import 'dart:io';
 import '../../../../core/app_export.dart';
 import '../../../../core/widgets/custom_image_view.dart';
 import '../viewmodels/group_info_viewmodel.dart';
+import '../viewmodels/chat_list_viewmodel.dart';
 import '../../data/models/group_member_model.dart';
-import 'package:go_router/go_router.dart';
 
 class GroupInfoPage extends StatefulWidget {
   final String roomId;
@@ -167,8 +167,11 @@ class _GroupInfoPageState extends State<GroupInfoPage> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final chatRepository = context.read<ChatListViewModel>().repository;
+    
     return ChangeNotifierProvider(
       create: (_) => GroupInfoViewModel(
+        repository: chatRepository,
         roomId: widget.roomId,
         initialName: widget.roomName,
         initialAvatarUrl: widget.avatarUrl,
@@ -330,6 +333,7 @@ class _GroupInfoPageState extends State<GroupInfoPage> with SingleTickerProvider
 
   Widget _buildMemberItem(GroupMember member, GroupInfoViewModel viewModel) {
     final isCurrentUser = viewModel.isCurrentUser(member.userId);
+    final canRemove = widget.isAdmin && !member.isAdmin && !isCurrentUser;
     
     return ListTile(
       leading: Container(
@@ -391,8 +395,48 @@ class _GroupInfoPageState extends State<GroupInfoPage> with SingleTickerProvider
                 ),
               ),
             )
-          : null,
+          : canRemove
+              ? IconButton(
+                  icon: Icon(Icons.remove_circle_outline, color: Colors.red),
+                  onPressed: () => _confirmRemoveMember(viewModel, member),
+                )
+              : null,
     );
+  }
+
+  Future<void> _confirmRemoveMember(GroupInfoViewModel viewModel, GroupMember member) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Member'),
+        content: Text('Are you sure you want to remove ${member.username} from this group?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Remove', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      final success = await viewModel.removeMember(member.userId);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(success 
+                ? '${member.username} removed from group' 
+                : viewModel.errorMessage ?? 'Failed to remove member'),
+            backgroundColor: success ? appTheme.greenCustom : Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildActionButton({

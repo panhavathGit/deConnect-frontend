@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/services/supabase_service.dart';
 
 import '../../../../core/app_export.dart';
 import '../../../../core/config/chat_config.dart';
@@ -348,15 +349,38 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.info_outline),
-          onPressed: () {
+          onPressed: () async {
+            // Check if current user is admin and get avatar URL
+            bool isAdmin = false;
+            String? avatarUrl;
+            try {
+              final memberResponse = await SupabaseService.client
+                  .from('room_members')
+                  .select('is_admin')
+                  .eq('room_id', widget.roomId)
+                  .eq('user_id', _viewModel.currentUserId)
+                  .single();
+              isAdmin = memberResponse['is_admin'] ?? false;
+
+              final roomResponse = await SupabaseService.client
+                  .from('chat_rooms')
+                  .select('avatar_url')
+                  .eq('id', widget.roomId)
+                  .single();
+              avatarUrl = roomResponse['avatar_url'];
+            } catch (e) {
+              debugPrint('Error fetching group info: $e');
+            }
+
+            if (!mounted) return;
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => GroupInfoPage(
                   roomId: widget.roomId,
                   roomName: widget.roomName,
-                  avatarUrl: null,
-                  isAdmin: false,
+                  avatarUrl: avatarUrl,
+                  isAdmin: isAdmin,
                 ),
               ),
             );

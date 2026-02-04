@@ -502,11 +502,25 @@ class _ChatListPageContentState extends State<_ChatListPageContent>
                       color: appTheme.blue_900.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.group,
-                      color: appTheme.blue_900,
-                      size: 28,
-                    ),
+                    child: group.avatarUrl != null && group.avatarUrl!.isNotEmpty
+                        ? ClipOval(
+                            child: Image.network(
+                              group.avatarUrl!,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Icon(
+                                Icons.group,
+                                color: appTheme.blue_900,
+                                size: 28,
+                              ),
+                            ),
+                          )
+                        : Icon(
+                            Icons.group,
+                            color: appTheme.blue_900,
+                            size: 28,
+                          ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

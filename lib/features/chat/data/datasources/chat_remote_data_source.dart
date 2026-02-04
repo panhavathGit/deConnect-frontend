@@ -31,6 +31,8 @@ abstract class ChatRemoteDataSource {
   Future<List<GroupChat>> getMyGroups();
   Future<String> regenerateInviteCode(String roomId);
 
+  Future<void> removeMember(String roomId, String userId);
+
 }
 
 class ChatRemoteDataSourceImpl implements ChatRemoteDataSource {
@@ -738,6 +740,21 @@ Future<List<ChatRoom>> getChatRooms() async {
       return newCode as String;
     } catch (e) {
       debugPrint('❌ Error regenerating code: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> removeMember(String roomId, String userId) async {
+    debugPrint('🚫 Removing member $userId from room: $roomId');
+    try {
+      await _supabase.rpc('remove_member_from_group', params: {
+        'target_room_id': roomId,
+        'target_user_id': userId,
+      });
+      debugPrint('✅ Member removed successfully');
+    } catch (e) {
+      debugPrint('❌ Error removing member: $e');
       rethrow;
     }
   }

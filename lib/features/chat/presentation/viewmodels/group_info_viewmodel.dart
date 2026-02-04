@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../../data/models/group_member_model.dart';
+import '../../data/repositories/chat_repository.dart';
 
 class GroupInfoViewModel extends ChangeNotifier {
+  final ChatRepository repository;
   final String roomId;
   final bool isAdmin;
   
@@ -15,6 +17,7 @@ class GroupInfoViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   GroupInfoViewModel({
+    required this.repository,
     required this.roomId,
     required String initialName,
     String? initialAvatarUrl,
@@ -27,7 +30,7 @@ class GroupInfoViewModel extends ChangeNotifier {
   List<GroupMember> get members => _members;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  String get currentUserId => SupabaseService.client.auth.currentUser?.id ?? '';
+  String get currentUserId => repository.currentUserId;
 
   bool isCurrentUser(String userId) => userId == currentUserId;
 
@@ -89,7 +92,6 @@ class GroupInfoViewModel extends ChangeNotifier {
 
   Future<bool> updateGroupPhoto(File imageFile) async {
     try {
-      final userId = currentUserId;
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = '${roomId}_$timestamp.jpg';
       final filePath = 'group-avatars/$fileName';
@@ -127,6 +129,34 @@ class GroupInfoViewModel extends ChangeNotifier {
       return true;
     } catch (e) {
       debugPrint('❌ Error leaving group: $e');
+      return false;
+    }
+  }
+
+  Future<bool> removeMember(String userId) async {
+    if (!isAdmin) {
+      _errorMessage = 'Only admins can remove members';
+      notifyListeners();
+      return false;
+    }
+
+    if (userId == currentUserId) {
+      _errorMessage = 'Use leave group to exit';
+      notifyListeners();
+      return false;
+    }
+
+    try {
+      await repository.removeMember(roomId, userId);
+
+      // Remove from local list
+      _members.removeWhere((m) => m.userId == userId);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      debugPrint('❌ Error removing member: $e');
+      notifyListeners();
       return false;
     }
   }

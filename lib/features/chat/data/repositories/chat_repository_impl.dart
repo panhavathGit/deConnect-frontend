@@ -74,4 +74,8 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<String> regenerateInviteCode(String roomId) =>
       remoteDataSource.regenerateInviteCode(roomId);
+
+  @override
+  Future<void> removeMember(String roomId, String userId) =>
+      remoteDataSource.removeMember(roomId, userId);
 }

@@ -23,4 +23,5 @@ abstract class ChatRepository {
   Future<JoinGroupResponse> joinGroupByCode(String code);
   Future<List<GroupChat>> getMyGroups();
   Future<String> regenerateInviteCode(String roomId);
+  Future<void> removeMember(String roomId, String userId);
 }
