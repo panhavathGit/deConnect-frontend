@@ -12,8 +12,10 @@ import 'features/feed/data/repositories/feed_repository_impl.dart';
 import 'features/feed/presentation/viewmodels/user_info_viewmodel.dart';
 import './features/chat/data/repositories/chat_repository_impl.dart';
 import './features/chat/data/datasources/chat_remote_data_source.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await SupabaseService.initialize();
 
   // Initialize data sources

@@ -1,5 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../constants/supabase_constants.dart';
+import '../config/env_config.dart';
+
+//Connect flutter to backend, behind the scenes: This is when Supabase sets up SharedPreferences for session storage
+//Creates a single shared instance of the Supabase client, so we can use .client everywhere
 
 class SupabaseService {
   // The Single Source of Truth
@@ -7,8 +10,8 @@ class SupabaseService {
 
   static Future<void> initialize() async {
     await Supabase.initialize(
-      url: SupabaseConstants.url,
-      anonKey: SupabaseConstants.anonKey,
+      url: EnvConfig.supabaseUrl,
+      anonKey: EnvConfig.supabaseAnonKey,
     );
   }
 }
