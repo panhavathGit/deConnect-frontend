@@ -12,6 +12,7 @@ import '../../features/feed/data/models/feed_model.dart';
 import '../../features/auth/presentation/views/register_screen.dart';
 import '../../features/feed/presentation/views/create_post_page.dart';
 import '../../features/splash/splash_screen.dart';
+import './app_routes.dart';
 
 class AppRouter {
 
@@ -23,52 +24,28 @@ class AppRouter {
     debugLogDiagnostics: true,
     
     // Initial location
-    initialLocation: '/splash',
-    
-    // Global redirect logic for authentication (no splash screen version)
-    // redirect: (BuildContext context, GoRouterState state) {
-
-    //   if(_bypassAuth) return null;
-
-    //   final isLoggedIn = SupabaseService.client.auth.currentUser != null;
-    //   final isGoingToLogin = state.matchedLocation == '/login';
-    //   final isGoingToRegister = state.matchedLocation == '/register';
-
-    //   // If user is not logged in and not going to auth pages, redirect to login
-    //   if (!isLoggedIn && !isGoingToLogin && !isGoingToRegister) {
-    //     return '/login';
-    //   }
-
-    //   // If user is logged in and going to auth pages, redirect to main
-    //   if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
-    //     return '/main';
-    //   }
-
-    //   // No redirect needed
-    //   return null;
-    // },
+    initialLocation: AppPaths.splash,
 
     // Global redirect logic for authentication (with splash screen)
     redirect: (BuildContext context, GoRouterState state) {
       if(_bypassAuth) return null;
 
-      // IMPORTANT: Don't redirect if going to splash screen
-      if (state.matchedLocation == '/splash') {
+      if (state.matchedLocation == AppPaths.splash) {
         return null; // Allow splash screen to show
       }
 
       final isLoggedIn = SupabaseService.client.auth.currentUser != null;
-      final isGoingToLogin = state.matchedLocation == '/login';
-      final isGoingToRegister = state.matchedLocation == '/register';
+      final isGoingToLogin = state.matchedLocation == AppPaths.login;
+      final isGoingToRegister = state.matchedLocation == AppPaths.register;
 
       // If user is not logged in and not going to auth pages, redirect to login
       if (!isLoggedIn && !isGoingToLogin && !isGoingToRegister) {
-        return '/login';
+        return AppPaths.login;
       }
 
       // If user is logged in and going to auth pages, redirect to main
       if (isLoggedIn && (isGoingToLogin || isGoingToRegister)) {
-        return '/main';
+        return AppPaths.feed;
       }
 
       // No redirect needed
@@ -79,23 +56,23 @@ class AppRouter {
     routes: [
       //splash route
       GoRoute(
-        path: '/splash',
-        name: 'splash',
+        path: AppPaths.splash,
+        name: AppRoutes.splash,
         pageBuilder: (context, state) => const NoTransitionPage(
           child: SplashScreen(),
         ),
       ),
       // Auth Routes
       GoRoute(
-        path: '/login',
-        name: 'login',
+        path: AppPaths.login,
+        name: AppRoutes.login,
         pageBuilder: (context, state) => NoTransitionPage(
           child: LoginScreen.builder(context),
         ),
       ),
       GoRoute(
-        path: '/register',
-        name: 'register',
+        path: AppPaths.register,
+        name: AppRoutes.register,
         pageBuilder: (context, state) => NoTransitionPage(
           child: RegisterScreen.builder(context),
         ),
@@ -103,12 +80,12 @@ class AppRouter {
 
       // Create Post Route (standalone, outside StatefulShellRoute)
       GoRoute(
-        path: '/create-post',
-        name: 'createPost',
+        path: AppPaths.createPost,
+        name: AppRoutes.createPost,
         builder: (context, state) => CreatePostPage.builder(context),
       ),
 
-      // Main App with Bottom Navigation
+      // Main App with Bottom Navigation, Define at the bottom
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
@@ -118,16 +95,16 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/main',
-                name: 'feed',
+                path: AppPaths.feed,
+                name: AppRoutes.feed,
                 pageBuilder: (context, state) => const NoTransitionPage(
                   child: FeedPage(),
                 ),
                 routes: [
                 // Post Detail Route
                 GoRoute(
-                  path: 'post/:id',
-                  name: 'postDetail',
+                  path: AppPaths.postDetail, // 'post/:id'
+                  name: AppRoutes.postDetail,
                   builder: (context, state) {
                     final post = state.extra as FeedPost;
                     return PostDetailPage(post: post);
@@ -135,8 +112,8 @@ class AppRouter {
                   routes: [
                     // Comments Route
                     GoRoute(
-                    path: 'comments',
-                    name: 'comments',
+                    path: AppPaths.comments, // 'comments'
+                    name: AppRoutes.comments,
                     builder: (context, state) {
                       final post = state.extra as FeedPost;
                       return CommentsPage.builder(context, post);  // Changed this line
@@ -154,21 +131,13 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/profile',
-                name: 'profile',
+                path: AppPaths.profile,
+                name: AppRoutes.profile,
                 pageBuilder: (context, state) => const NoTransitionPage(
                   child: ProfilePage(),
                 ),
                 routes: [
-                  // Future: Add settings route
-                  // GoRoute(
-                  //   path: 'settings',
-                  //   name: 'settings',
-                  //   builder: (context, state) => const SettingsPage(),
-                  // ),
-
-                  
-              
+            
                 ],
               ),
             ],
@@ -178,8 +147,8 @@ class AppRouter {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/chat',
-                name: 'chat',
+                path: AppPaths.chat,
+                name: AppRoutes.chat,
                 pageBuilder: (context, state) => const NoTransitionPage(
                   child: ChatListPage(),
                 ),
@@ -218,7 +187,7 @@ class AppRouter {
             Text('${state.uri}'),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => context.go('/main'),
+              onPressed: () => context.goNamed(AppRoutes.feed),
               child: const Text('Go Home'),
             ),
           ],

@@ -7,6 +7,7 @@ import '../viewmodels/feed_viewmodel.dart';
 import '../viewmodels/user_info_viewmodel.dart';
 import '../../data/models/feed_model.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -40,7 +41,7 @@ class _FeedPageState extends State<FeedPage> {
         actionBackgroundColor: Color(0x33868686),
         onActionPressed: () {
           // Navigate to messages/notifications
-          context.go('/chat');
+          context.go(AppPaths.chat);
         },
       ),
       body: Column(
@@ -139,7 +140,7 @@ class _FeedPageState extends State<FeedPage> {
               // Create Post Icon
               GestureDetector(
                 onTap: () {
-                  context.push('/create-post');
+                  context.push(AppPaths.createPost);
                 },
                 child: Container(
                   width: 40,
@@ -226,7 +227,11 @@ class _FeedPageState extends State<FeedPage> {
   Widget _buildFeedCard(FeedPost post) {
     return GestureDetector(
       onTap: () {
-        context.push('/main/post/${post.id}', extra: post);
+        context.pushNamed(
+          AppRoutes.postDetail,
+          pathParameters: {'id': post.id},
+          extra: post,
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 20),

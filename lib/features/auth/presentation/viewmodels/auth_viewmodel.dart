@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../../../core/app_export.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
@@ -175,7 +176,7 @@ class AuthViewModel extends ChangeNotifier {
           emailController.clear();
           passwordController.clear();
 
-          context.go('/main');
+          context.go(AppPaths.feed);
         }
       }
     } catch (e) {
@@ -218,15 +219,13 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       if (response.user != null) {
-        await _authRepository.logout();
-        
+        // await _authRepository.logout();
         isSuccess = true;
-
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Registration successful! Please login.'),
+              content: Text('Registration successful! Welcome!'),
               backgroundColor: appTheme.greenCustom,
             ),
           );
@@ -240,8 +239,8 @@ class AuthViewModel extends ChangeNotifier {
           confirmPasswordController.clear();
           selectedGender = null;
 
-          // Navigate to login
-          context.go('/login');
+          // Navigate to main screen (feed)
+          context.go(AppPaths.feed);
         }
       }
     } catch (e) {
@@ -260,10 +259,10 @@ class AuthViewModel extends ChangeNotifier {
   }
 
   void onSignUpPressed(BuildContext context) {
-    context.go('/register');
+    context.go(AppPaths.register);
   }
 
   void onSignInPressed(BuildContext context) {
-    context.go('/login');
+    context.go(AppPaths.login);
   }
 }

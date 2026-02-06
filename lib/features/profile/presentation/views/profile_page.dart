@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'edit_profile_page.dart';
 import '../../../feed/data/models/feed_model.dart';
 import 'edit_post_page.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -135,7 +136,11 @@ class _ProfilePageContent extends StatelessWidget {
       padding: EdgeInsets.only(bottom: 20),
       child: ProfilePostItem(
         post: post,
-        onTap: () => context.push('/main/post/${post.id}', extra: post),
+        onTap: () => context.pushNamed(
+          AppRoutes.postDetail,
+          pathParameters: {'id': post.id},
+          extra: post,
+        ),
         onEdit: () => _handleEditPost(context, post),
         onDelete: () => _handleDeletePost(context, post),
       ),
@@ -240,7 +245,7 @@ class _ProfilePageContent extends StatelessWidget {
       try {
         await AuthRepository().logout();
         if (context.mounted) {
-          context.go('/login');
+          context.go(AppPaths.login);
         }
       } catch (e) {
         if (context.mounted) {

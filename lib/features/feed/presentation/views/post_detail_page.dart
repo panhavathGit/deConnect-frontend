@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/app_export.dart';
 import '../../../../core/widgets/custom_image_view.dart';
 import '../../data/models/feed_model.dart';
+import '../../../../core/routes/app_routes.dart';
 
 class PostDetailPage extends StatefulWidget {
   final FeedPost post;
@@ -152,7 +153,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   // View Comments Button
                   GestureDetector(
                     onTap: () {
-                      context.push('/main/post/${widget.post.id}/comments', extra: widget.post);
+                      context.pushNamed(
+                        AppRoutes.comments,
+                        pathParameters: {'id': widget.post.id},
+                        extra: widget.post,
+                      );
                     },
                     child: Row(
                       children: [

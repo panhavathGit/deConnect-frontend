@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../core/app_export.dart';
 import '../../core/services/supabase_service.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/routes/app_routes.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -71,9 +72,9 @@ class _SplashScreenState extends State<SplashScreen>
     final isLoggedIn = SupabaseService.client.auth.currentUser != null;
 
     if (isLoggedIn) {
-      context.go('/main');
+      context.go(AppPaths.feed);
     } else {
-      context.go('/login');
+      context.go(AppPaths.login);
     }
   }
 
