@@ -1,6 +1,5 @@
 // lib/features/profile/views/widgets/profile_error_state.dart
 import 'package:flutter/material.dart';
-import '../../../../../core/app_export.dart';
 
 class ProfileErrorState extends StatelessWidget {
   final String? errorMessage;
@@ -14,6 +13,9 @@ class ProfileErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -21,29 +23,21 @@ class ProfileErrorState extends StatelessWidget {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: appTheme.colorFFFF00,
+            color: colors.error,
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Text(
               errorMessage ?? 'Something went wrong',
-              style: TextStyleHelper.instance.body15MediumInter,
+              style: textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           ElevatedButton(
             onPressed: onRetry,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: appTheme.blue_900,
-              foregroundColor: appTheme.white_A700,
-              padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Text('Retry'),
+            child: const Text('Retry'),
           ),
         ],
       ),

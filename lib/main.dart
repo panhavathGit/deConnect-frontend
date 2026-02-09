@@ -13,6 +13,7 @@ import 'features/feed/presentation/viewmodels/user_info_viewmodel.dart';
 import './features/chat/data/repositories/chat_repository_impl.dart';
 import './features/chat/data/datasources/chat_remote_data_source.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
@@ -58,12 +59,10 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'DeConnect',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        useMaterial3: true,
-      ),
+      theme: appTheme,
       routerConfig: AppRouter.router,
       debugShowCheckedModeBanner: false,
     );
   }
 }
+

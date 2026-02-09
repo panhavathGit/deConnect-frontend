@@ -121,16 +121,6 @@ class _ProfilePageContent extends StatelessWidget {
     );
   }
 
-  // List<Widget> _buildPostsList(BuildContext context, List<dynamic> posts) {
-  //   return posts.map((post) => Padding(
-  //     padding: EdgeInsets.only(bottom: 20),
-  //     child: ProfilePostItem(
-  //       post: post,
-  //       onTap: () => context.push('/main/post/${post.id}', extra: post),
-  //     ),
-  //   )).toList();
-  // }
-
   List<Widget> _buildPostsList(BuildContext context, List<dynamic> posts) {
     return posts.map((post) => Padding(
       padding: EdgeInsets.only(bottom: 20),
