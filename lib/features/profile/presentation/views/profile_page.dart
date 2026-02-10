@@ -1,6 +1,6 @@
 // lib/features/profile/views/profile_page.dart
 import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/services/supabase_service.dart';
 import '../viewmodels/profile_viewmodel.dart';
 import '../../data/repositories/profile_repository_impl.dart';
@@ -16,6 +16,7 @@ import 'edit_profile_page.dart';
 import '../../../feed/data/models/feed_model.dart';
 import 'edit_post_page.dart';
 import '../../../../core/routes/app_routes.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -44,8 +45,10 @@ class _ProfilePageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: theme.colorScheme.onPrimary,
       body: SafeArea(
         child: Consumer<ProfileViewModel>(
           builder: (context, viewModel, _) {
@@ -76,7 +79,7 @@ class _ProfilePageContent extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     SizedBox(height: 20),
-                    _buildHeader(),
+                    _buildHeader(context),
                     SizedBox(height: 20),
                     ProfileCard(
                       user: user,
@@ -86,7 +89,7 @@ class _ProfilePageContent extends StatelessWidget {
                       onLogout: () => _handleLogout(context),
                     ),
                     SizedBox(height: 30),
-                    _buildPostsHeader(viewModel.userPosts.length),
+                    _buildPostsHeader(context,viewModel.userPosts.length),
                     SizedBox(height: 20),
                     ..._buildPostsList(context, viewModel.userPosts),
                     SizedBox(height: 20),
@@ -100,23 +103,25 @@ class _ProfilePageContent extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       'Profile',
-      style: TextStyleHelper.instance.display40RegularSourceSerifPro.copyWith(
+      style: theme.textTheme.displayLarge?.copyWith(
         fontSize: 28,
         fontWeight: FontWeight.w700,
-        color: appTheme.blue_900,
+        color: theme.colorScheme.primary,
       ),
     );
   }
 
-  Widget _buildPostsHeader(int postCount) {
+  Widget _buildPostsHeader(BuildContext context ,int postCount) {
+    final theme = Theme.of(context);
     return Text(
       'Your Posts ($postCount)',
-      style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+      style: theme.textTheme.titleSmall?.copyWith(
         fontSize: 20,
-        color: appTheme.blue_light,
+        color: theme.colorScheme.secondary,
       ),
     );
   }
@@ -151,6 +156,7 @@ class _ProfilePageContent extends StatelessWidget {
   }
 
   void _handleDeletePost(BuildContext context, FeedPost post) async {
+    final theme = Theme.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -180,7 +186,7 @@ class _ProfilePageContent extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(success ? 'Post deleted successfully' : 'Failed to delete post'),
-            backgroundColor: success ? appTheme.greenCustom : Colors.red,
+            backgroundColor: success ? theme.colorScheme.tertiary : Colors.red,
           ),
         );
       }
@@ -223,7 +229,7 @@ class _ProfilePageContent extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: appTheme.colorFFFF00,
+              foregroundColor: Colors.red,
             ),
             child: Text('Logout'),
           ),

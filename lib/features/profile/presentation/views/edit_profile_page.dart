@@ -11,6 +11,7 @@ import '../viewmodels/profile_viewmodel.dart';
 import '../../../feed/presentation/viewmodels/user_info_viewmodel.dart';
 import '../../../feed/presentation/viewmodels/feed_viewmodel.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class EditProfilePage extends StatefulWidget {
   final User user;
@@ -124,6 +125,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _saveProfile() async {
+    final theme = Theme.of(context);
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
@@ -168,7 +170,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Profile updated successfully!'),
-            backgroundColor: appTheme.greenCustom,
+            backgroundColor: theme.colorScheme.tertiary,
           ),
         );
 
@@ -192,18 +194,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: theme.colorScheme.onPrimary,
       appBar: AppBar(
-        backgroundColor: appTheme.white_A700,
+        backgroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: appTheme.black_900),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Edit Profile',
-          style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+          style: theme.textTheme.titleSmall?.copyWith(
             fontSize: 20,
           ),
         ),
@@ -225,7 +228,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         height: 120,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: appTheme.blue_gray_100,
+                          color: theme.colorScheme.surface
                         ),
                         child: _selectedImage != null
                             ? ClipOval(
@@ -242,14 +245,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                       errorBuilder: (_, __, ___) => Icon(
                                         Icons.person,
                                         size: 60,
-                                        color: appTheme.greyCustom,
+                                        color: theme.colorScheme.tertiary,
                                       ),
                                     ),
                                   )
                                 : Icon(
                                     Icons.person,
                                     size: 60,
-                                    color: appTheme.greyCustom,
+                                    color: theme.colorScheme.tertiary,
                                   ),
                       ),
                       Positioned(
@@ -262,16 +265,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             height: 36,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: appTheme.blue_900,
+                              color: theme.colorScheme.primary,
                               border: Border.all(
-                                color: appTheme.white_A700,
+                                color: theme.colorScheme.onPrimary,
                                 width: 2,
                               ),
                             ),
                             child: Icon(
                               Icons.camera_alt,
                               size: 18,
-                              color: appTheme.white_A700,
+                              color: theme.colorScheme.onPrimary,
                             ),
                           ),
                         ),
@@ -284,7 +287,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // Username
                 Text(
                   'Username',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 6),
                 CustomEditText(
@@ -303,7 +306,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // First Name
                 Text(
                   'First Name',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 6),
                 CustomEditText(
@@ -316,7 +319,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // Last Name
                 Text(
                   'Last Name',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 6),
                 CustomEditText(
@@ -329,15 +332,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // Gender
                 Text(
                   'Gender',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 6),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: appTheme.grey100,
+                    color: theme.colorScheme.onPrimary,
                     borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: appTheme.blue_gray_100),
+                    border: Border.all(color: theme.colorScheme.surface),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -361,15 +364,15 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 // Bio
                 Text(
                   'Bio',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 6),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    color: appTheme.grey100,
+                    color: theme.colorScheme.onPrimary,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: appTheme.blue_gray_100),
+                    border: Border.all(color: theme.colorScheme.surface),
                   ),
                   child: TextField(
                     controller: _bioController,
@@ -378,11 +381,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     decoration: InputDecoration(
                       hintText: 'Tell us about yourself...',
                       border: InputBorder.none,
-                      hintStyle: TextStyleHelper.instance.body15MediumInter.copyWith(
-                        color: appTheme.greyCustom,
+                      hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.tertiary,
                       ),
                     ),
-                    style: TextStyleHelper.instance.body15MediumInter,
+                    style: theme.textTheme.bodyMedium,
                   ),
                 ),
                 SizedBox(height: 30),
@@ -391,8 +394,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 CustomButton(
                   text: _isLoading ? 'Saving...' : 'Save Changes',
                   width: double.infinity,
-                  backgroundColor: appTheme.blue_900,
-                  textColor: appTheme.white_A700,
+                  backgroundColor: theme.colorScheme.primary,
+                  textColor: theme.colorScheme.onPrimary,
                   borderRadius: 28,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   fontSize: 15,

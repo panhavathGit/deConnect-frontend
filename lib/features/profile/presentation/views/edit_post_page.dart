@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:io';
-import '../../../../../core/app_export.dart';
 import '../../../../../core/widgets/custom_button.dart';
 import '../../../../../core/widgets/custom_edit_text.dart';
 import '../../../../../core/widgets/custom_image_view.dart';
@@ -11,6 +10,7 @@ import '../../../../../core/widgets/custom_image_view.dart';
 import '../viewmodels/profile_viewmodel.dart';
 import '../../../feed/data/models/feed_model.dart';
 import '../../../../core/services/supabase_service.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class EditPostPage extends StatefulWidget {
   final FeedPost post;
@@ -86,6 +86,7 @@ class _EditPostPageState extends State<EditPostPage> {
   }
 
   void _showImageSourceDialog() {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       shape: RoundedRectangleBorder(
@@ -97,7 +98,7 @@ class _EditPostPageState extends State<EditPostPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.camera_alt, color: appTheme.blue_900),
+              leading: Icon(Icons.camera_alt, color: theme.colorScheme.primary),
               title: Text('Take Photo'),
               onTap: () {
                 Navigator.pop(context);
@@ -105,7 +106,7 @@ class _EditPostPageState extends State<EditPostPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.photo_library, color: appTheme.blue_900),
+              leading: Icon(Icons.photo_library, color: theme.colorScheme.primary),
               title: Text('Choose from Gallery'),
               onTap: () {
                 Navigator.pop(context);
@@ -141,6 +142,8 @@ class _EditPostPageState extends State<EditPostPage> {
   }
 
   Future<void> _updatePost() async {
+    final theme = Theme.of(context);
+    
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -171,10 +174,12 @@ class _EditPostPageState extends State<EditPostPage> {
 
       if (mounted) {
         if (success) {
+          
           ScaffoldMessenger.of(context).showSnackBar(
+            
             SnackBar(
               content: Text('Post updated successfully!'),
-              backgroundColor: appTheme.greenCustom,
+              backgroundColor: theme.colorScheme.tertiary,
             ),
           );
           context.pop();
@@ -228,18 +233,19 @@ class _EditPostPageState extends State<EditPostPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: theme.colorScheme.onPrimary,
       appBar: AppBar(
-        backgroundColor: appTheme.white_A700,
+        backgroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: appTheme.black_900),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Edit Post',
-          style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+          style: theme.textTheme.titleSmall,
         ),
       ),
       body: SafeArea(
@@ -257,10 +263,10 @@ class _EditPostPageState extends State<EditPostPage> {
                     width: double.infinity,
                     height: 200,
                     decoration: BoxDecoration(
-                      color: appTheme.blue_gray_100,
+                      color: theme.colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: appTheme.blue_900.withOpacity(0.3),
+                        color: theme.colorScheme.primary.withOpacity(0.3),
                         width: 2,
                       ),
                     ),
@@ -288,13 +294,13 @@ class _EditPostPageState extends State<EditPostPage> {
                                   Icon(
                                     Icons.add_photo_alternate_outlined,
                                     size: 48,
-                                    color: appTheme.greyCustom,
+                                    color: theme.colorScheme.surface,
                                   ),
                                   SizedBox(height: 8),
                                   Text(
                                     'Tap to add image',
-                                    style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                                      color: appTheme.greyCustom,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.tertiary,
                                     ),
                                   ),
                                 ],
@@ -306,7 +312,7 @@ class _EditPostPageState extends State<EditPostPage> {
                 // Tags Selection
                 Text(
                   'Tags',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 8),
                 Wrap(
@@ -319,13 +325,13 @@ class _EditPostPageState extends State<EditPostPage> {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? appTheme.blue_900 : appTheme.grey100,
+                          color: isSelected ? theme.colorScheme.primary : theme.colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           tag,
-                          style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                            color: isSelected ? appTheme.white_A700 : appTheme.black_900,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -337,7 +343,7 @@ class _EditPostPageState extends State<EditPostPage> {
                 // Title
                 Text(
                   'Title',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 8),
                 CustomEditText(
@@ -355,7 +361,7 @@ class _EditPostPageState extends State<EditPostPage> {
                 // Content
                 Text(
                   'Content',
-                  style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+                  style: theme.textTheme.titleSmall,
                 ),
                 SizedBox(height: 8),
                 TextFormField(
@@ -384,8 +390,8 @@ class _EditPostPageState extends State<EditPostPage> {
                 CustomButton(
                   text: _isLoading ? 'Updating...' : 'Update Post',
                   width: double.infinity,
-                  backgroundColor: appTheme.blue_900,
-                  textColor: appTheme.white_A700,
+                  backgroundColor: theme.colorScheme.primary,
+                  textColor: theme.colorScheme.onPrimary,
                   borderRadius: 28,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   fontSize: 15,
