@@ -1,10 +1,6 @@
 // lib/features/feed/presentation/views/post_detail_page.dart
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_image_view.dart';
-import '../../data/models/feed_model.dart';
-import '../../../../core/routes/app_routes.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../feed.dart';
 
 class PostDetailPage extends StatefulWidget {
   final FeedPost post;

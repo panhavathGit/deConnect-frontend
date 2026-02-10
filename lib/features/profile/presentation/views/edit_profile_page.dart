@@ -1,17 +1,8 @@
 // lib/features/profile/views/edit_profile_page.dart
-import 'package:flutter/material.dart';
+import 'package:onboarding_project/core/app_export.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_edit_text.dart';
-import '../../../../core/services/supabase_service.dart';
-import '../../../auth/data/models/user_model.dart';
-import '../viewmodels/profile_viewmodel.dart';
-import '../../../feed/presentation/viewmodels/user_info_viewmodel.dart';
-import '../../../feed/presentation/viewmodels/feed_viewmodel.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../feature.dart';
 
 class EditProfilePage extends StatefulWidget {
   final User user;

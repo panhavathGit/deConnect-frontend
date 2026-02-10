@@ -1,22 +1,8 @@
 // lib/features/profile/views/profile_page.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/services/supabase_service.dart';
-import '../viewmodels/profile_viewmodel.dart';
-import '../../data/repositories/profile_repository_impl.dart';
-import '../../data/datasources/profile_mock_data_source.dart';
-import '../../data/datasources/profile_remote_data_source.dart';
-import '../../../auth/data/repositories/auth_repository.dart';
-import 'widgets/profile_card.dart';
-import 'widgets/profile_post_item.dart';
-import 'widgets/profile_loading_state.dart';
-import 'widgets/profile_error_state.dart';
-import 'package:go_router/go_router.dart';
-import 'edit_profile_page.dart';
-import '../../../feed/data/models/feed_model.dart';
-import 'edit_post_page.dart';
-import '../../../../core/routes/app_routes.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../profile.dart';
+import '../../../feed/feed.dart';
+import '../../../auth/auth.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

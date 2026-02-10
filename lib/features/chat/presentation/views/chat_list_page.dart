@@ -1,18 +1,8 @@
 // lib/features/chat/views/chat_list_page.dart
-
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/app_export.dart';
-import '../viewmodels/chat_list_viewmodel.dart';
-import '../viewmodels/your_group_viewmodel.dart';
-import '../../data/repositories/chat_repository_impl.dart';
-import '../../data/datasources/chat_remote_data_source.dart';
-import 'chat_room_page.dart';
-import 'select_user_page.dart';
+import 'package:onboarding_project/core/app_export.dart';
 import 'package:intl/intl.dart';
-import 'create_group_page.dart';
-import 'join_group_page.dart';
 import 'package:flutter/services.dart';
+import '../../chat.dart';
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});

@@ -1,14 +1,8 @@
 // lib/features/feed/presentation/views/create_post_page.dart
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
 import 'dart:io';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_edit_text.dart';
-import '../viewmodels/create_post_viewmodel.dart';
-import 'package:go_router/go_router.dart';
-import '../viewmodels/feed_viewmodel.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../feed.dart';
 
 class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});

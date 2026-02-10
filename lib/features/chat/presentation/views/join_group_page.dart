@@ -1,10 +1,7 @@
 // lib/features/chat/views/join_group_page.dart
 
-import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../data/repositories/chat_repository_impl.dart';
-import '../../data/datasources/chat_remote_data_source.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../chat.dart';
 
 class JoinGroupPage extends StatefulWidget {
   const JoinGroupPage({super.key});

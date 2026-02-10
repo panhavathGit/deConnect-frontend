@@ -1,9 +1,15 @@
+// --- Before ----
+
 // lib/features/auth/viewmodels/auth_viewmodel.dart
-import 'package:flutter/material.dart';
-import '../../data/repositories/auth_repository.dart';
-import '../../../../core/app_export.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/routes/app_routes.dart';
+// import 'package:flutter/material.dart';
+// import '../../data/repositories/auth_repository.dart';
+// import '../../../../core/app_export.dart';
+// import 'package:go_router/go_router.dart';
+// import '../../../../core/routes/app_routes.dart';
+
+// --- After ----
+import 'package:onboarding_project/core/app_export.dart';
+import '../../auth.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();

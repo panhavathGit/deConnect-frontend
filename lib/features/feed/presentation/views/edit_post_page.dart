@@ -1,15 +1,9 @@
 // lib/features/feed/presentation/views/edit_post_page.dart
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:io';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_edit_text.dart';
-import '../../../../core/widgets/custom_image_view.dart';
-import '../../data/models/feed_model.dart';
-import '../../../profile/presentation/viewmodels/profile_viewmodel.dart';
-import '../../../../core/services/supabase_service.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../feed.dart';
+import '../../../profile/profile.dart';
 
 class EditPostPage extends StatefulWidget {
   final FeedPost post;

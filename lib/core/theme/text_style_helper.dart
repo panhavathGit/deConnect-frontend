@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../app_export.dart';
+import '../core.dart';
 
 /// A helper class for managing text styles in the application
 class TextStyleHelper {

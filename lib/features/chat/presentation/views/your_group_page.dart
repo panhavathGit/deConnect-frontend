@@ -1,13 +1,8 @@
 // lib/features/chat/views/your_groups_page.dart
 
-import 'package:flutter/material.dart';
+import 'package:onboarding_project/core/app_export.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../../../core/app_export.dart';
-import '../viewmodels/your_group_viewmodel.dart';
-import '../../data/repositories/chat_repository_impl.dart';
-import '../../data/datasources/chat_remote_data_source.dart';
-import 'chat_room_page.dart';
+import '../../chat.dart';
 
 class YourGroupsPage extends StatelessWidget {
   const YourGroupsPage({super.key});

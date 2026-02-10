@@ -1,5 +1,10 @@
+// App Export - Global imports for the entire app
+library app_export;
+
+// Flutter & Packages
+export 'package:flutter/material.dart';
 export 'package:provider/provider.dart';
-export 'theme/theme_helper.dart';
-export 'theme/text_style_helper.dart';
-export './utils/image_constant.dart';
-export '../features/auth/data/models/auth_model.dart';
+export 'package:go_router/go_router.dart';
+
+// Core barrel
+export 'core.dart';

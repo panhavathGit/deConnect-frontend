@@ -1,10 +1,10 @@
 // lib/features/chat/viewmodels/chat_list_viewmodel.dart
 
-import 'dart:async';
-import 'package:flutter/material.dart';
-import '../../data/models/chat_room_model.dart';
-import '../../data/repositories/chat_repository.dart';
+import 'package:onboarding_project/core/app_export.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import '../../chat.dart';
 
 enum ChatListStatus { initial, loading, success, error }
 

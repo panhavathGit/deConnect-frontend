@@ -1,10 +1,10 @@
 // lib/features/chat/viewmodels/chat_room_viewmodel.dart
 
+import 'package:onboarding_project/core/app_export.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import '../../data/models/message_model.dart';
-import '../../data/repositories/chat_repository.dart';
+import '../../chat.dart';
 
 enum ChatRoomStatus { initial, loading, success, error }
 

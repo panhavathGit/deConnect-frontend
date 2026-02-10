@@ -1,10 +1,6 @@
 // lib/features/auth/views/register_screen.dart
-import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_button.dart';
-import '../../../../core/widgets/custom_edit_text.dart';
-import '../../../../core/widgets/custom_image_view.dart';
-import '../viewmodels/auth_viewmodel.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../auth.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});

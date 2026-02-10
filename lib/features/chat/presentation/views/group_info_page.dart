@@ -1,13 +1,9 @@
 // lib/features/chat/views/group_info_page.dart
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_image_view.dart';
-import '../viewmodels/group_info_viewmodel.dart';
-import '../viewmodels/chat_list_viewmodel.dart';
-import '../../data/models/group_member_model.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import 'package:flutter/services.dart';
+import '../../chat.dart';
 
 class GroupInfoPage extends StatefulWidget {
   final String roomId;

@@ -6,7 +6,7 @@ final Color thirdColor = const Color(0xFFFDBE10);
 final Color fourthColor = const Color(0xFFD9D9D9);
 final Color fifth = const Color(0xFF119949);
 
-final ThemeData appTheme = ThemeData(
+final ThemeData appTTheme = ThemeData(
   primaryColor: primaryColor,
   colorScheme: ColorScheme.fromSeed(
     seedColor: primaryColor,

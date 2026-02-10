@@ -1,28 +1,10 @@
 // lib/features/chat/presentation/views/chat_room_page.dart
+import 'package:onboarding_project/core/app_export.dart';
 import 'dart:io';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../../../core/services/supabase_service.dart';
-
-import '../../../../core/app_export.dart';
-import '../../../../core/config/chat_config.dart';
-import '../../../../core/services/file_picker_service.dart';
-import '../../../../core/utils/date_formatter.dart';
-import '../viewmodels/chat_room_viewmodel.dart';
-import '../viewmodels/chat_list_viewmodel.dart';
-import '../../data/models/message_model.dart';
-import './widgets/date_separator.dart';
-import './widgets/message_bubble.dart';
-import './widgets/animated_typing_dot.dart';
-import './widgets/typing_indicator.dart';
-import './widgets/attachment_picker_sheet.dart';
-import './widgets/file_preview_dialog.dart';
-import './widgets/message_options_sheet.dart';
-import 'group_info_page.dart';
-import 'full_image_view.dart';
+import '../../chat.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String roomId;

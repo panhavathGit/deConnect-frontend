@@ -1,13 +1,6 @@
 // lib/features/feed/presentation/views/feed_page.dart
-import 'package:flutter/material.dart';
-import '../../../../core/app_export.dart';
-import '../../../../core/widgets/custom_app_bar.dart';
-import '../../../../core/widgets/custom_image_view.dart';
-import '../viewmodels/feed_viewmodel.dart';
-import '../viewmodels/user_info_viewmodel.dart';
-import '../../data/models/feed_model.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/routes/app_routes.dart';
+import 'package:onboarding_project/core/app_export.dart';
+import '../../feed.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});

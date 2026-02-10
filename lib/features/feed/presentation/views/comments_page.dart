@@ -1,14 +1,6 @@
 // lib/features/feed/presentation/views/comments_page.dart
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../../core/app_export.dart';
-import '../../data/models/feed_model.dart';
-import '../../data/models/comment_model.dart';
-import '../../data/repositories/comment_repository_impl.dart';
-import '../../data/datasources/comment_remote_data_source.dart';
-import '../../data/datasources/comment_mock_data_source.dart';
-import '../viewmodels/comment_viewmodel.dart';
-import '../../../../core/services/supabase_service.dart'; 
+import 'package:onboarding_project/core/app_export.dart';
+import '../../feed.dart';
 
 class CommentsPage extends StatefulWidget {
   final FeedPost post;
