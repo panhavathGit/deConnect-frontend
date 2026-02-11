@@ -3,6 +3,7 @@ import '../datasources/feed_remote_data_source.dart';
 import '../datasources/feed_mock_data_source.dart';
 import '../models/feed_model.dart';
 import './feed_repository.dart';
+import 'dart:io';
 
 class FeedRepositoryImpl implements FeedRepository {
   final FeedRemoteDataSource? remoteDataSource;
@@ -52,5 +53,10 @@ class FeedRepositoryImpl implements FeedRepository {
     if (!useMockData) {
       await remoteDataSource!.deletePost(id);
     }
+  }
+
+  @override
+  Future<String> uploadPostImage(File image, String userId) async {
+    return await remoteDataSource!.uploadPostImage(image, userId);
   }
 }

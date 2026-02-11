@@ -1,20 +1,19 @@
-// lib/features/profile/data/models/profile_stats_model.dart
+// lib/features/profile/data/models/profile_status.dart
+import 'package:json_annotation/json_annotation.dart';
+
+part 'profile_status.g.dart';
+
+@JsonSerializable()
 class ProfileStats {
+  @JsonKey(name: 'posts_count', defaultValue: 0)
   final int postsCount;
 
-  ProfileStats({
+  const ProfileStats({
     required this.postsCount,
   });
 
-  factory ProfileStats.fromJson(Map<String, dynamic> json) {
-    return ProfileStats(
-      postsCount: json['posts_count'] ?? 0,
-    );
-  }
+  factory ProfileStats.fromJson(Map<String, dynamic> json) => 
+      _$ProfileStatsFromJson(json);
 
-  Map<String, dynamic> toJson() {
-    return {
-      'posts_count': postsCount,
-    };
-  }
+  Map<String, dynamic> toJson() => _$ProfileStatsToJson(this);
 }

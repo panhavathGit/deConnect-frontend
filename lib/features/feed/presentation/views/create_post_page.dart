@@ -8,8 +8,11 @@ class CreatePostPage extends StatefulWidget {
   const CreatePostPage({super.key});
 
   static Widget builder(BuildContext context) {
+    
+    final feedRepository = FeedRepositoryImpl(remoteDataSource: FeedRemoteDataSourceImpl(),useMockData: false,);
+    
     return ChangeNotifierProvider(
-      create: (_) => CreatePostViewModel(),
+      create: (_) => CreatePostViewModel(repository: feedRepository),
       child: const CreatePostPage(),
     );
   }

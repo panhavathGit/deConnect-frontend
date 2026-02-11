@@ -107,7 +107,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.post.authorName,
+                              widget.post.authorName!,
                               style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
                                 fontSize: 16,
                               ),

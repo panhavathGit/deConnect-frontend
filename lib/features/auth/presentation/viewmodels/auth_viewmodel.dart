@@ -1,4 +1,4 @@
-// --- Before ----
+// --- Before barrel file ----
 
 // lib/features/auth/viewmodels/auth_viewmodel.dart
 // import 'package:flutter/material.dart';
@@ -7,14 +7,16 @@
 // import 'package:go_router/go_router.dart';
 // import '../../../../core/routes/app_routes.dart';
 
-// --- After ----
+// --- After barrel file ----
+// There is less import 
+// --------------------------
 import 'package:onboarding_project/core/app_export.dart';
 import '../../auth.dart';
 
 class AuthViewModel extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
   
-  AuthModel loginModel = AuthModel();
+  AuthModel loginModel = const AuthModel();
 
   // Login Controllers
   TextEditingController emailController = TextEditingController();
@@ -30,6 +32,9 @@ class AuthViewModel extends ChangeNotifier {
 
   bool isLoading = false;
   bool isSuccess = false;
+
+  bool get isLoggedIn => loginModel.isLoggedIn;
+
   String? emailError;
   String? passwordError;
   String? usernameError;
@@ -165,10 +170,18 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       if (response.user != null) {
-        loginModel.email = emailController.text;
-        loginModel.isLoggedIn = true;
-        loginModel.username = response.user?.userMetadata?['username'] ?? '';
+        // This is the old approach with modify the field since it was mutable 
+        // loginModel.email = emailController.text;
+        // loginModel.isLoggedIn = true;
+        // loginModel.username = response.user?.userMetadata?['username'] ?? '';
 
+          loginModel = AuthModel(
+          email: emailController.text,
+          isLoggedIn: true,
+          username: response.user?.userMetadata?['username'] ?? '',
+          password: passwordController.text, 
+       
+        );
         isSuccess = true;
 
         if (context.mounted) {
@@ -270,5 +283,12 @@ class AuthViewModel extends ChangeNotifier {
 
   void onSignInPressed(BuildContext context) {
     context.go(AppPaths.login);
+  }
+
+  void logout() {
+    loginModel = const AuthModel(); // Reset to default
+    emailController.clear();
+    passwordController.clear();
+    notifyListeners();
   }
 }

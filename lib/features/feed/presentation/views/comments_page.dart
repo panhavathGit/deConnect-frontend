@@ -333,13 +333,13 @@ class _CommentsPageState extends State<CommentsPage> {
               ),
               if (comment.updatedAt != null) ...[
                 SizedBox(height: 4),
-                Text(
-                  '(edited)',
-                  style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                    color: appTheme.greyCustom,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
+                // Text(
+                //   '(edited)',
+                //   style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
+                //     color: appTheme.greyCustom,
+                //     fontStyle: FontStyle.italic,
+                //   ),
+                // ),
               ],
             ],
           ),

@@ -1,17 +1,35 @@
 // lib/features/feed/data/models/comment_model.dart
+import 'package:json_annotation/json_annotation.dart';
+
+part 'comment_model.g.dart';
+
+@JsonSerializable()
 class CommentModel {
+  @JsonKey(includeToJson: false)  // Don't send ID
   final String id;
+  
+  @JsonKey(name: 'post_id')
   final String postId;
+  
+  @JsonKey(name: 'user_id')
   final String userId;
+  
   final String content;
+  
+  @JsonKey(name: 'created_at', includeToJson: false)  // Auto-generated
   final DateTime createdAt;
+  
+  @JsonKey(name: 'updated_at', includeToJson: false)  // Auto-generated
   final DateTime? updatedAt;
   
-  // User profile info (from join)
+  // User profile info (from join) - ignore in serialization
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final String? authorName;
+  
+  @JsonKey(includeFromJson: false, includeToJson: false)
   final String? authorAvatar;
 
-  CommentModel({
+  const CommentModel({
     required this.id,
     required this.postId,
     required this.userId,
@@ -23,35 +41,46 @@ class CommentModel {
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
-    // Handle joined profile data
+    // Handle joined profile data manually
     final profile = json['profiles'];
+    final comment = _$CommentModelFromJson(json);
     
+    // Return new instance with profile data
     return CommentModel(
-      id: json['id'],
-      postId: json['post_id'],
-      userId: json['user_id'],
-      content: json['content'],
-      createdAt: DateTime.parse(json['created_at']),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
-          : null,
-      authorName: profile != null ? profile['username'] : null,
-      authorAvatar: profile != null ? profile['avatar_url'] : null,
+      id: comment.id,
+      postId: comment.postId,
+      userId: comment.userId,
+      content: comment.content,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      authorName: profile?['username'],
+      authorAvatar: profile?['avatar_url'],
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'post_id': postId,
-      'user_id': userId,
-      'content': content,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
-    };
+  Map<String, dynamic> toJson() => _$CommentModelToJson(this);
+  
+  bool isOwnComment(String currentUserId) {
+    return userId == currentUserId;
   }
 
-  // Helper method to get time ago string
+  static String? validateContent(String? content) {
+    if (content == null || content.trim().isEmpty) {
+      return 'Comment content cannot be empty';
+    }
+    
+    if (content.trim().length < 1) {
+      return 'Comment must have at least 1 character';
+    }
+    
+    if (content.trim().length > 500) {
+      return 'Comment cannot exceed 500 characters';
+    }
+    
+    return null; // Valid
+  }
+
+
   String getTimeAgo() {
     final now = DateTime.now();
     final difference = now.difference(createdAt);
@@ -73,19 +102,4 @@ class CommentModel {
     }
   }
 
-  // Check if comment belongs to current user
-  bool isOwnComment(String currentUserId) {
-    return userId == currentUserId;
-  }
-
-  // Validation helper
-  static String? validateContent(String? content) {
-    if (content == null || content.trim().isEmpty) {
-      return 'Comment cannot be empty';
-    }
-    if (content.trim().length > 1000) {
-      return 'Comment must be 1000 characters or less';
-    }
-    return null;
-  }
 }

@@ -284,7 +284,7 @@ class _FeedPageState extends State<FeedPage> {
                       ),
                       SizedBox(width: 8),
                       Text(
-                        post.authorName,
+                        post.authorName!,
                         style: TextStyleHelper.instance.body12MediumRoboto,
                       ),
                       Spacer(),

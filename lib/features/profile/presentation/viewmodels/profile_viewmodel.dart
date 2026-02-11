@@ -21,6 +21,7 @@ class ProfileViewModel extends ChangeNotifier {
   }) {
     _feedRepository = FeedRepositoryImpl(
       remoteDataSource: FeedRemoteDataSourceImpl(),
+      useMockData: false,
     );
   }
 

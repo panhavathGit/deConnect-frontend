@@ -29,24 +29,16 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       
       // Get email from auth user
       final authUser = _supabase.auth.currentUser;
+      final data = Map<String, dynamic>.from(response);
+      data['email'] = authUser?.email ?? '';
       
-      return UserModel.User(
-        id: response['id'],
-        name: response['username'] ?? 'Unknown',
-        email: authUser?.email ?? '',
-        firstName: response['first_name'],      // Add
-        lastName: response['last_name'],        // Add
-        gender: response['gender'],             // Add
-        avatarUrl: response['avatar_url'],
-        bio: response['bio'],
-        createdAt: DateTime.parse(response['created_at']),
-      );
+      return UserModel.User.fromJson(data);
     } catch (e) {
       print('❌ Error fetching profile: $e');
       rethrow;
     }
   }
-  
+ 
   @override
   Future<ProfileStats> getProfileStats(String userId) async {
     try {
@@ -64,6 +56,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return ProfileStats(
         postsCount: count,
       );
+
     } catch (e) {
       print('❌ Error fetching stats: $e');
       // Return default stats on error
@@ -92,26 +85,16 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
       print('✅ Fetched ${response.length} posts');
 
-      return (response as List).map((post) {
-        final profile = post['profiles'];
-        // Parse tags array from database
-        List<String> tags = [];
-        if (post['tags'] != null) {
-          tags = List<String>.from(post['tags']);
-        }
-
-        return FeedPost(
-          id: post['id'],
-          title: post['title'] ?? '',
-          content: post['content'] ?? '',
-          userId: post['user_id'],
-          tags: tags,
-          authorName: profile?['username'] ?? 'Unknown',
-          authorAvatar: profile?['avatar_url'],
-          createdAt: DateTime.parse(post['created_at']),
-          imageUrl: post['image_url'],
-      
-        );
+      // Use the same adapter pattern as in FeedRemoteDataSource
+      return (response as List).map((json) {
+        final profile = json['profiles'] as Map<String, dynamic>?;
+        final data = Map<String, dynamic>.from(json);
+        
+        // Add profile data to top-level
+        data['author_name'] = profile?['username'] ?? 'Unknown';
+        data['author_avatar'] = profile?['avatar_url'];
+        
+        return FeedPost.fromJson(data);
       }).toList();
     } catch (e) {
       print('❌ Error fetching user posts: $e');
@@ -123,25 +106,24 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<void> updateProfile(UserModel.User user) async {
     try {
       print('💾 Updating profile in Supabase: ${user.id}');
-      
+
       // await _supabase.from('profiles').update({
       //   'username': user.name,
+      //   'first_name': user.firstName,
+      //   'last_name': user.lastName,
+      //   'gender': user.gender,
       //   'avatar_url': user.avatarUrl,
       //   'bio': user.bio,
       //   'updated_at': DateTime.now().toIso8601String(),
       // }).eq('id', user.id);
 
-      await _supabase.from('profiles').update({
-        'username': user.name,
-        'first_name': user.firstName,
-        'last_name': user.lastName,
-        'gender': user.gender,
-        'avatar_url': user.avatarUrl,
-        'bio': user.bio,
-        'updated_at': DateTime.now().toIso8601String(),
-      }).eq('id', user.id);
+      await _supabase
+        .from('profiles')
+        .update(user.toJson())
+        .eq('id', user.id);
 
       print('✅ Profile updated successfully');
+      
     } catch (e) {
       print('❌ Error updating profile: $e');
       rethrow;
@@ -160,18 +142,28 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
           .neq('id', currentUserId ?? '') // Exclude current user
           .order('username');
 
+      // final users = (response as List).map((json) {
+      //   return UserModel.User(
+      //     id: json['id'],
+      //     name: json['username'] ?? 'Unknown',
+      //     email: json['email'] ?? '',
+      //     avatarUrl: json['avatar_url'],
+      //     bio: json['bio'],
+      //     createdAt: DateTime.parse(json['created_at']),
+      //   );
+      // }).toList();
+
       final users = (response as List).map((json) {
-        return UserModel.User(
-          id: json['id'],
-          name: json['username'] ?? 'Unknown',
-          email: json['email'] ?? '',
-          avatarUrl: json['avatar_url'],
-          bio: json['bio'],
-          createdAt: DateTime.parse(json['created_at']),
-        );
+        // Add email field (might be null from profiles table)
+        final data = Map<String, dynamic>.from(json);
+        if (!data.containsKey('email')) {
+          data['email'] = '';
+        }
+        return UserModel.User.fromJson(data);
       }).toList();
 
       print('✅ Fetched ${users.length} users');
+      
       return users;
     } catch (e) {
       print('❌ Error fetching users: $e');
