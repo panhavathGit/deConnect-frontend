@@ -5,6 +5,7 @@ final Color secondaryColor = const Color(0xFF0097F5);
 final Color thirdColor = const Color(0xFFFDBE10);
 final Color fourthColor = const Color(0xFFD9D9D9);
 final Color fifth = const Color(0xFF119949);
+final Color custom_grey = const Color.fromARGB(255, 174, 174, 174);
 
 final ThemeData appTTheme = ThemeData(
   primaryColor: primaryColor,
@@ -13,6 +14,7 @@ final ThemeData appTTheme = ThemeData(
     primary: primaryColor,
     secondary: secondaryColor,
     surface: fourthColor,
+    onTertiary: custom_grey,
     background: fourthColor,
     tertiary: fifth,
     onPrimary: Colors.white,

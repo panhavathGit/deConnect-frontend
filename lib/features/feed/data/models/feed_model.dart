@@ -18,6 +18,8 @@ class FeedPost {
   final String? imageUrl;
   
   // These fields come from JOIN - read from JSON but don't write
+  // We don't write mean we don't post to database because database does not have
+  // author_name field, we use includeToJson flase to prevent error field not found
   @JsonKey(name: 'author_name', includeToJson: false)
   final String? authorName;
   
@@ -48,49 +50,3 @@ class FeedPost {
 
   String get primaryTag => tags.isNotEmpty ? tags.first : 'General';
 }
-
-// @JsonSerializable()
-// class FeedPost {
-//   final String id;
-//   final String title;
-//   final String content;
-  
-//   @JsonKey(name: 'user_id')
-//   final String userId;
-  
-//   @JsonKey(name: 'image_url')
-//   final String? imageUrl;
-  
-//   @JsonKey(name: 'author_name')
-//   final String authorName;
-  
-//   @JsonKey(name: 'author_avatar')
-//   final String? authorAvatar;
-  
-//   final List<String> tags;
-  
-//   @JsonKey(name: 'created_at')
-//   final DateTime createdAt;
-
-//   const FeedPost({
-//     required this.id,
-//     required this.title,
-//     required this.content,
-//     required this.userId,
-//     this.imageUrl,
-//     required this.authorName,
-//     this.authorAvatar,
-//     this.tags = const [],
-//     required this.createdAt,
-//   });
-
-//   // Generated fromJson
-//   factory FeedPost.fromJson(Map<String, dynamic> json) => 
-//       _$FeedPostFromJson(json);
-
-//   // Generated toJson
-//   Map<String, dynamic> toJson() => _$FeedPostToJson(this);
-
-//   // Helper to get primary tag
-//   String get primaryTag => tags.isNotEmpty ? tags.first : 'General';
-// }

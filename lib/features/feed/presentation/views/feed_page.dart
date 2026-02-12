@@ -1,6 +1,7 @@
 // lib/features/feed/presentation/views/feed_page.dart
 import 'package:onboarding_project/core/app_export.dart';
 import '../../feed.dart';
+import '../../../profile/profile.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -132,8 +133,14 @@ class _FeedPageState extends State<FeedPage> {
 
               // Create Post Icon
               GestureDetector(
-                onTap: () {
-                  context.push(AppPaths.createPost);
+                onTap: () async {
+                  final result = await context.push(AppPaths.createPost);
+                  if(result == true){
+                    context.read<ProfileViewModel>().refresh();
+                    print('trying to refresh profile page');
+                    context.read<FeedViewModel>().loadPosts();
+                    print('load post..............');
+                  }
                 },
                 child: Container(
                   width: 40,
@@ -288,7 +295,7 @@ class _FeedPageState extends State<FeedPage> {
                         style: TextStyleHelper.instance.body12MediumRoboto,
                       ),
                       Spacer(),
-                      Icon(Icons.chat_bubble_outline, size: 16, color: appTheme.greyCustom),
+                      // Icon(Icons.chat_bubble_outline, size: 16, color: appTheme.greyCustom),
                       
                     ],
                   ),

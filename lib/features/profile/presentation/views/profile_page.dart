@@ -9,20 +9,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get current logged-in user ID from Supabase
-    final currentUserId = SupabaseService.client.auth.currentUser?.id ?? 'user1';
-    
-    return ChangeNotifierProvider(
-      create: (_) => ProfileViewModel(
-        repository: ProfileRepositoryImpl(
-          remoteDataSource: ProfileRemoteDataSourceImpl(),
-          mockDataSource: ProfileMockDataSourceImpl(),
-          useMockData: false, // Set to false to use real Supabase data
-        ),
-        userId: currentUserId,
-      )..loadProfile(),
-      child: const _ProfilePageContent(),
-    );
+    return const _ProfilePageContent(); 
   }
 }
 

@@ -22,24 +22,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: theme.colorScheme.onPrimary,
       body: CustomScrollView(
         slivers: [
           // App Bar with back button and image
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
-            backgroundColor: appTheme.white_A700,
+            backgroundColor: theme.colorScheme.onPrimary,
             leading: Padding(
               padding: EdgeInsets.all(8),
               child: Container(
                 decoration: BoxDecoration(
-                  color: appTheme.black_900.withOpacity(0.3),
+                  color: theme.colorScheme.onSurface.withOpacity(0.3),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: appTheme.white_A700),
+                  icon: Icon(Icons.arrow_back, color: theme.colorScheme.onPrimary),
                   onPressed: () => context.pop(),
                 ),
               ),
@@ -53,11 +54,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       fit: BoxFit.cover,
                     )
                   : Container(
-                      color: appTheme.blue_gray_100,
+                      color: theme.colorScheme.surface,
                       child: Icon(
                         Icons.image,
                         size: 100,
-                        color: appTheme.greyCustom,
+                        color: theme.colorScheme.onTertiary,
                       ),
                     ),
             ),
@@ -73,7 +74,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   // Title
                   Text(
                     widget.post.title,
-                    style: TextStyleHelper.instance.display40RegularSourceSerifPro.copyWith(
+                    style: theme.textTheme.displayLarge?.copyWith(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       height: 1.2,
@@ -89,16 +90,16 @@ class _PostDetailPageState extends State<PostDetailPage> {
                         height: 40,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: appTheme.blue_gray_100,
+                          color: theme.colorScheme.surface,
                         ),
-                        // child: Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+                        // child: Icon(Icons.person, size: 24, color: theme.colorScheme.onTertiary),
                         child: ClipOval(
                           child: widget.post.authorAvatar != null && widget.post.authorAvatar!.isNotEmpty
                               ? CustomImageView(
                                   imagePath: widget.post.authorAvatar,
                                   fit: BoxFit.cover,
                                 )
-                              : Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+                              : Icon(Icons.person, size: 24, color: theme.colorScheme.onTertiary),
                         ),
                       ),
                       SizedBox(width: 12),
@@ -108,29 +109,29 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           children: [
                             Text(
                               widget.post.authorName!,
-                              style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+                              style: theme.textTheme.titleSmall?.copyWith(
                                 fontSize: 16,
                               ),
                             ),
                             Text(
                               _formatDate(widget.post.createdAt),
-                              style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                                color: appTheme.greyCustom,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onTertiary,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.access_time, size: 16, color: appTheme.greyCustom),
+                      Icon(Icons.access_time, size: 16, color: theme.colorScheme.onTertiary),
                       SizedBox(width: 4),
                       Text(
                         _formatDate(widget.post.createdAt),
-                        style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                          color: appTheme.greyCustom,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onTertiary,
                         ),
                       ),
-                      SizedBox(width: 16),
-                      Icon(Icons.chat_bubble_outline, size: 16, color: appTheme.greyCustom),
+                      // SizedBox(width: 16),
+                      // Icon(Icons.chat_bubble_outline, size: 16, color: theme.colorScheme.onTertiary),
                       
                     ],
                   ),
@@ -139,7 +140,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   // Full Content
                   Text(
                     widget.post.content,
-                    style: TextStyleHelper.instance.body15MediumInter.copyWith(
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.6,
                       fontSize: 16,
                     ),
@@ -157,81 +158,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     },
                     child: Row(
                       children: [
-                        Icon(Icons.comment, size: 20, color: appTheme.blue_900),
+                        Icon(Icons.comment, size: 20, color: theme.colorScheme.primary),
                         SizedBox(width: 8),
                         Text(
                           'View Comments',
-                          style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                            color: appTheme.blue_900,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Spacer(),
-                        Icon(Icons.arrow_forward_ios, size: 16, color: appTheme.blue_900),
+                        Icon(Icons.arrow_forward_ios, size: 16, color: theme.colorScheme.primary),
                       ],
                     ),
                   ),
                   SizedBox(height: 24),
+                  // This use to have comment input 
 
-                  // Comment Input Section
-                  // Text(
-                  //   'Add a comment',
-                  //   style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
-                  //     fontSize: 16,
-                  //   ),
-                  // ),
-                  // SizedBox(height: 12),
-                  // _buildCommentInput(),
-                  // SizedBox(height: 100),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCommentInput() {
-    return Container(
-      decoration: BoxDecoration(
-        color: appTheme.grey100,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: appTheme.blue_gray_100),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _commentController,
-              decoration: InputDecoration(
-                hintText: 'Write your comment...',
-                hintStyle: TextStyleHelper.instance.body15MediumInter.copyWith(
-                  color: appTheme.greyCustom,
-                ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              ),
-              maxLines: null,
-              style: TextStyleHelper.instance.body15MediumInter,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: IconButton(
-              onPressed: () {
-                // TODO: Implement add comment functionality
-                if (_commentController.text.isNotEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Comment added!'),
-                      backgroundColor: appTheme.green_700,
-                    ),
-                  );
-                  _commentController.clear();
-                }
-              },
-              icon: Icon(Icons.send, color: appTheme.blue_900),
             ),
           ),
         ],

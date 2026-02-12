@@ -1,6 +1,7 @@
 // lib/features/feed/data/datasources/comment_remote_data_source.dart
 import '../../../../core/services/supabase_service.dart';
 import '../models/comment_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class CommentRemoteDataSource {
   Future<List<CommentModel>> getCommentsByPostId(String postId);

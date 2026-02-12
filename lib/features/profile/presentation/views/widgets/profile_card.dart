@@ -264,7 +264,7 @@ class ProfileCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          user.name,
+          user.firstName!,
           style: textTheme.titleSmall,
         ),
         const SizedBox(height: 4),

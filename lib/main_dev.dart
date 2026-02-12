@@ -38,6 +38,17 @@ Future<void> main() async {
         ChangeNotifierProvider(
           create: (_) => ChatListViewModel(repository: chatRepository),
         ),
+        ChangeNotifierProvider(create: (_) {
+          final currentUserId = SupabaseService.client.auth.currentUser?.id ?? 'user1';
+          return ProfileViewModel(
+            repository: ProfileRepositoryImpl(
+              remoteDataSource: ProfileRemoteDataSourceImpl(),
+              mockDataSource: ProfileMockDataSourceImpl(),
+              useMockData: false,
+            ),
+            userId: currentUserId,
+          )..loadProfile();
+        }),
       ],
       child: const MyApp(),
     ),

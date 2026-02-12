@@ -127,7 +127,7 @@ class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
       // 1. Create a mutable copy of the response
       final data = Map<String, dynamic>.from(response);
       
-      // 2. Extract the nested profile
+      // 2. Extract the nested profile (Because we are joining two tables that is why we kinda do a bit alot here)
       final profile = data['profiles'] as Map<String, dynamic>?;
       
       // 3. Move nested fields to top-level keys (matching your JSON annotations)
@@ -141,6 +141,8 @@ class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
       // - Parsing 'tags' list
       // - Parsing 'created_at' DateTime
       // - Null safety checks
+
+      // This is where we actually change from normal model to json serializable
       return FeedPost.fromJson(data);
 
     } catch (e) {

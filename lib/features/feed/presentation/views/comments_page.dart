@@ -47,7 +47,7 @@ class _CommentsPageState extends State<CommentsPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Comment added!'),
-            backgroundColor: appTheme.greenCustom,
+            backgroundColor: theme.colorScheme.tertiary,
             duration: Duration(seconds: 2),
           ),
         );
@@ -62,39 +62,6 @@ class _CommentsPageState extends State<CommentsPage> {
       }
     }
   }
-
-  // void _showDeleteDialog(CommentModel comment) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: Text('Delete Comment'),
-  //       content: Text('Are you sure you want to delete this comment?'),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: Text('Cancel'),
-  //         ),
-  //         TextButton(
-  //           onPressed: () async {
-  //             Navigator.pop(context);
-  //             final viewModel = context.read<CommentViewModel>();
-  //             final success = await viewModel.deleteComment(comment.id);
-              
-  //             if (mounted) {
-  //               ScaffoldMessenger.of(context).showSnackBar(
-  //                 SnackBar(
-  //                   content: Text(success ? 'Comment deleted' : 'Failed to delete comment'),
-  //                   backgroundColor: success ? appTheme.greenCustom : Colors.red,
-  //                 ),
-  //               );
-  //             }
-  //           },
-  //           child: Text('Delete', style: TextStyle(color: Colors.red)),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   void _showDeleteDialog(CommentModel comment, CommentViewModel viewModel) {
     showDialog(
@@ -118,7 +85,7 @@ class _CommentsPageState extends State<CommentsPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(success ? 'Comment deleted!' : 'Failed to delete comment'),
-                    backgroundColor: success ? appTheme.greenCustom : Colors.red,
+                    backgroundColor: success ? theme.colorScheme.tertiary : Colors.red,
                     duration: Duration(seconds: 2),
                   ),
                 );
@@ -133,24 +100,27 @@ class _CommentsPageState extends State<CommentsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
-      backgroundColor: appTheme.white_A700,
+      backgroundColor: theme.colorScheme.onPrimary,
       appBar: AppBar(
-        backgroundColor: appTheme.white_A700,
+        backgroundColor: theme.colorScheme.onPrimary,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: appTheme.black_900),
+          icon: Icon(Icons.arrow_back, color: theme.colorScheme.onSurface),
           onPressed: () => context.pop(),
         ),
         title: Text(
           'Comments',
-          style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(
+          style: theme.textTheme.titleSmall?.copyWith(
             fontSize: 20,
+            color: theme.colorScheme.primary
           ),
         ),
         bottom: PreferredSize(
           preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: appTheme.blue_gray_100),
+          child: Divider(height: 1, color: theme.colorScheme.surface),
         ),
       ),
       body: Consumer<CommentViewModel>(
@@ -159,13 +129,13 @@ class _CommentsPageState extends State<CommentsPage> {
             children: [
               // Comments List
               Expanded(
-                child: _buildCommentsList(viewModel),
+                child: _buildCommentsList(context,viewModel),
               ),
 
               // Comment Input at Bottom
               Container(
                 decoration: BoxDecoration(
-                  color: appTheme.white_A700,
+                  color: theme.colorScheme.onPrimary,
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withOpacity(0.05),
@@ -176,7 +146,7 @@ class _CommentsPageState extends State<CommentsPage> {
                 ),
                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 child: SafeArea(
-                  child: _buildCommentInput(viewModel),
+                  child: _buildCommentInput(context,viewModel),
                 ),
               ),
             ],
@@ -186,10 +156,12 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget _buildCommentsList(CommentViewModel viewModel) {
+  Widget _buildCommentsList(BuildContext context ,CommentViewModel viewModel) {
+    final theme = Theme.of(context);
+
     if (viewModel.isLoading) {
       return Center(
-        child: CircularProgressIndicator(color: appTheme.blue_900),
+        child: CircularProgressIndicator(color: theme.colorScheme.surface),
       );
     }
 
@@ -202,7 +174,7 @@ class _CommentsPageState extends State<CommentsPage> {
             SizedBox(height: 16),
             Text(
               viewModel.errorMessage ?? 'Failed to load comments',
-              style: TextStyleHelper.instance.body15MediumInter,
+              style: theme.textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
             SizedBox(height: 16),
@@ -220,17 +192,17 @@ class _CommentsPageState extends State<CommentsPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.comment_outlined, size: 64, color: appTheme.greyCustom),
+            Icon(Icons.comment_outlined, size: 64, color: theme.colorScheme.surface),
             SizedBox(height: 16),
             Text(
               'No comments yet',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
+              style: theme.textTheme.titleSmall!,
             ),
             SizedBox(height: 8),
             Text(
               'Be the first to comment!',
-              style: TextStyleHelper.instance.body15MediumInter.copyWith(
-                color: appTheme.greyCustom,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.surface,
               ),
             ),
           ],
@@ -240,26 +212,27 @@ class _CommentsPageState extends State<CommentsPage> {
 
     return RefreshIndicator(
       onRefresh: () => viewModel.loadComments(),
-      color: appTheme.blue_900,
+      color: theme.colorScheme.surface,
       child: ListView.separated(
         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         itemCount: viewModel.comments.length,
         separatorBuilder: (context, index) => Divider(
           height: 32,
-          color: appTheme.blue_gray_100,
+          color: theme.colorScheme.surface,
         ),
         itemBuilder: (context, index) {
-          return _buildCommentItem(viewModel.comments[index], viewModel);
+          return _buildCommentItem(context,viewModel.comments[index], viewModel);
         },
       ),
     );
   }
 
-  Widget _buildCommentItem(CommentModel comment, CommentViewModel viewModel) {
+  Widget _buildCommentItem(BuildContext context ,CommentModel comment, CommentViewModel viewModel) {
     // Get current user ID from Supabase
     final currentUserId = SupabaseService.client.auth.currentUser?.id ?? '';
     final isOwn = comment.isOwnComment(currentUserId);
 
+    final theme = Theme.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,7 +242,7 @@ class _CommentsPageState extends State<CommentsPage> {
           height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: appTheme.blue_gray_100,
+            color: theme.colorScheme.surface,
           ),
           child: comment.authorAvatar != null
               ? ClipOval(
@@ -279,11 +252,11 @@ class _CommentsPageState extends State<CommentsPage> {
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.person,
                       size: 24,
-                      color: appTheme.greyCustom,
+                      color: theme.colorScheme.surface,
                     ),
                   ),
                 )
-              : Icon(Icons.person, size: 24, color: appTheme.greyCustom),
+              : Icon(Icons.person, size: 24, color: theme.colorScheme.surface),
         ),
         SizedBox(width: 12),
         Expanded(
@@ -299,7 +272,7 @@ class _CommentsPageState extends State<CommentsPage> {
                         Flexible(
                           child: Text(
                             comment.authorName ?? 'Unknown',
-                            style: TextStyleHelper.instance.title18BoldSourceSerifPro
+                            style: theme.textTheme.titleSmall!
                                 .copyWith(fontSize: 15),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -307,8 +280,8 @@ class _CommentsPageState extends State<CommentsPage> {
                         SizedBox(width: 8),
                         Text(
                           comment.getTimeAgo(),
-                          style: TextStyleHelper.instance.body12MediumRoboto
-                              .copyWith(color: appTheme.greyCustom),
+                          style: theme.textTheme.bodySmall!
+                              .copyWith(color: theme.colorScheme.onTertiary),
                         ),
                       ],
                     ),
@@ -327,7 +300,7 @@ class _CommentsPageState extends State<CommentsPage> {
               SizedBox(height: 6),
               Text(
                 comment.content,
-                style: TextStyleHelper.instance.body15MediumInter.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.4,
                 ),
               ),
@@ -335,8 +308,8 @@ class _CommentsPageState extends State<CommentsPage> {
                 SizedBox(height: 4),
                 // Text(
                 //   '(edited)',
-                //   style: TextStyleHelper.instance.body12MediumRoboto.copyWith(
-                //     color: appTheme.greyCustom,
+                //   style: theme.textTheme.bodySmall!.copyWith(
+                //     color: theme.colorScheme.surface,
                 //     fontStyle: FontStyle.italic,
                 //   ),
                 // ),
@@ -348,12 +321,13 @@ class _CommentsPageState extends State<CommentsPage> {
     );
   }
 
-  Widget _buildCommentInput(CommentViewModel viewModel) {
+  Widget _buildCommentInput(BuildContext context,CommentViewModel viewModel) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: appTheme.grey100,
+        color: theme.colorScheme.onPrimary,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: appTheme.blue_gray_100),
+        border: Border.all(color: theme.colorScheme.surface),
       ),
       child: Row(
         children: [
@@ -362,8 +336,8 @@ class _CommentsPageState extends State<CommentsPage> {
               controller: _commentController,
               decoration: InputDecoration(
                 hintText: 'Add a comment...',
-                hintStyle: TextStyleHelper.instance.body15MediumInter.copyWith(
-                  color: appTheme.greyCustom,
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onTertiary,
                 ),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -376,13 +350,13 @@ class _CommentsPageState extends State<CommentsPage> {
                     padding: EdgeInsets.only(left: 20, top: 4),
                     child: Text(
                       '$currentLength/$maxLength',
-                      style: TextStyle(fontSize: 11, color: appTheme.greyCustom),
+                      style: TextStyle(fontSize: 11, color: theme.colorScheme.surface),
                     ),
                   );
                 }
                 return null;
               },
-              style: TextStyleHelper.instance.body15MediumInter,
+              style: theme.textTheme.bodyMedium,
             ),
           ),
           Padding(
@@ -393,12 +367,12 @@ class _CommentsPageState extends State<CommentsPage> {
                     height: 24,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: appTheme.blue_900,
+                      color: theme.colorScheme.surface,
                     ),
                   )
                 : IconButton(
                     onPressed: _addComment,
-                    icon: Icon(Icons.send, color: appTheme.blue_900),
+                    icon: Icon(Icons.send, color: theme.colorScheme.primary),
                   ),
           ),
         ],
