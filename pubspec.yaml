@@ -61,6 +61,7 @@ dependencies:
   http: ^1.2.0
 
   json_annotation: ^4.9.0
+  infinite_scroll_pagination: ^5.1.1
 
 
 dev_dependencies:

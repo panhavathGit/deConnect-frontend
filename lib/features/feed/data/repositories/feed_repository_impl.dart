@@ -17,11 +17,29 @@ class FeedRepositoryImpl implements FeedRepository {
   });
 
   @override
-  Future<List<FeedPost>> getPosts({String? category}) async {
+  // Future<List<FeedPost>> getPosts({String? category}) async {
+  //   if (useMockData) {
+  //     return await mockDataSource!.getPosts(category: category);
+  //   } else {
+  //     return await remoteDataSource!.getPosts(category: category);
+  //   }
+  // }
+  Future<List<FeedPost>> getPosts({
+    String? category, 
+    int offset = 0, 
+    int limit = 10,
+  }) async {
     if (useMockData) {
+      // Note: You might need to update your MockDataSource too 
+      // if you want pagination to work with fake data!
       return await mockDataSource!.getPosts(category: category);
     } else {
-      return await remoteDataSource!.getPosts(category: category);
+      // Pass the offset and limit to the remote data source
+      return await remoteDataSource!.getPosts(
+        category: category,
+        offset: offset,
+        limit: limit,
+      );
     }
   }
 

@@ -123,10 +123,24 @@ class MessageBubble extends StatelessWidget {
         children: [
           if (message.hasImage) _buildImageContent(),
           if (message.hasDocument) _buildDocumentContent(),
+          // if (message.hasMedia && !message.isMediaOnly)
+          //   Padding(
+          //     padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
+          //     child: Text(
+          //       message.content,
+          //       style: TextStyle(
+          //         color: isMe
+          //             ? Colors.white
+          //             : (isDark ? Colors.white : Colors.black87),
+          //         fontSize: 15,
+          //       ),
+          //     ),
+          //   ),
+          
           if (message.hasMedia && !message.isMediaOnly)
             Padding(
               padding: const EdgeInsets.only(top: 8, left: 8, right: 8),
-              child: Text(
+              child: SelectableText(
                 message.content,
                 style: TextStyle(
                   color: isMe
@@ -136,13 +150,25 @@ class MessageBubble extends StatelessWidget {
                 ),
               ),
             ),
+
+
           if (!message.hasMedia)
-            TextParser.buildRichText(
-              message.content,
-              isMe: isMe,
-              isDark: isDark,
-              linkColor: isMe ? Colors.lightBlueAccent : appTheme.blue_900,
-              onUrlTap: onUrlTap ?? (_) {},
+            // TextParser.buildRichText(
+            //   message.content,
+            //   isMe: isMe,
+            //   isDark: isDark,
+            //   linkColor: isMe ? Colors.lightBlueAccent : appTheme.blue_900,
+            //   onUrlTap: onUrlTap ?? (_) {},
+            // ),
+            GestureDetector(
+              onLongPress: onLongPress, // Keep existing long press for options
+              child: TextParser.buildRichText(
+                message.content,
+                isMe: isMe,
+                isDark: isDark,
+                linkColor: isMe ? Colors.lightBlueAccent : appTheme.blue_900,
+                onUrlTap: onUrlTap ?? (_) {},
+              ),
             ),
           _buildMessageFooter(),
         ],

@@ -18,8 +18,18 @@ class TextParser {
   }) {
     final matches = _urlRegex.allMatches(text);
     
+    // if (matches.isEmpty) {
+    //   return Text(
+    //     text,
+    //     style: TextStyle(
+    //       color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87),
+    //       fontSize: fontSize,
+    //     ),
+    //   );
+    // }
+
     if (matches.isEmpty) {
-      return Text(
+      return SelectableText(
         text,
         style: TextStyle(
           color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87),
@@ -73,6 +83,13 @@ class TextParser {
       ));
     }
 
-    return RichText(text: TextSpan(children: spans));
+    // return RichText(text: TextSpan(children: spans));
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      style: TextStyle(
+        color: isMe ? Colors.white : (isDark ? Colors.white : Colors.black87),
+        fontSize: fontSize,
+      ),
+    );
   }
 }

@@ -2,6 +2,7 @@
 import 'package:onboarding_project/core/app_export.dart';
 import '../../feed.dart';
 import '../../../profile/profile.dart';
+import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 
 class FeedPage extends StatefulWidget {
   const FeedPage({super.key});
@@ -18,7 +19,7 @@ class _FeedPageState extends State<FeedPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<FeedViewModel>().loadPosts();
+      // context.read<FeedViewModel>().loadPosts();
       context.read<UserInfoViewModel>().loadUserInfo();
     });
   }
@@ -47,19 +48,83 @@ class _FeedPageState extends State<FeedPage> {
           _buildCategoryTabs(),
 
           // Feed List
+          // Expanded(
+          //   child: feedViewModel.isLoading
+          //       ? const Center(child: CircularProgressIndicator())
+          //       : feedViewModel.posts.isEmpty
+          //           ? _buildEmptyState()
+          //           : ListView.builder(
+          //               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          //               itemCount: feedViewModel.posts.length,
+          //               itemBuilder: (context, index) {
+          //                 return _buildFeedCard(feedViewModel.posts[index]);
+          //               },
+          //             ),
+          // ),
           Expanded(
-            child: feedViewModel.isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : feedViewModel.posts.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        itemCount: feedViewModel.posts.length,
-                        itemBuilder: (context, index) {
-                          return _buildFeedCard(feedViewModel.posts[index]);
-                        },
+            child: ListenableBuilder(
+              listenable: feedViewModel.pagingController,
+              builder: (context, _) {
+                return PagedListView<int, FeedPost>(
+                  state: feedViewModel.pagingController.value,
+                  fetchNextPage: () => feedViewModel.pagingController.fetchNextPage(),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  builderDelegate: PagedChildBuilderDelegate<FeedPost>(
+                    itemBuilder: (context, item, index) => _buildFeedCard(item),
+                    noItemsFoundIndicatorBuilder: (context) => _buildEmptyState(),
+                    firstPageErrorIndicatorBuilder: (context) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Failed to load posts',
+                            style: TextStyleHelper.instance.body15MediumInter,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () => feedViewModel.pagingController.refresh(),
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ),
+                    ),
+                    newPageErrorIndicatorBuilder: (context) => Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Center(
+                        child: ElevatedButton(
+                          onPressed: () => feedViewModel.pagingController.fetchNextPage(),
+                          child: const Text('Retry'),
+                        ),
+                      ),
+                    ),
+                    firstPageProgressIndicatorBuilder: (context) => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                    newPageProgressIndicatorBuilder: (context) => Container(
+                      padding: const EdgeInsets.all(32),
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading more posts...',
+                            style: TextStyleHelper.instance.body15MediumInter.copyWith(
+                              color: appTheme.greyCustom,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Control when to fetch next page: when user is 3 items away from bottom
+                    invisibleItemsThreshold: 3,
+                  ),
+                );
+              },
+            ),
           ),
+          
         ],
       ),
     );
@@ -138,8 +203,8 @@ class _FeedPageState extends State<FeedPage> {
                   if(result == true){
                     context.read<ProfileViewModel>().refresh();
                     print('trying to refresh profile page');
-                    context.read<FeedViewModel>().loadPosts();
-                    print('load post..............');
+                    context.read<FeedViewModel>().pagingController.refresh();
+                    print('refreshing feed..............');
                   }
                 },
                 child: Container(

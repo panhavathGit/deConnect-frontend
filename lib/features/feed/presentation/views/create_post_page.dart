@@ -129,7 +129,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         );
         
         // re-load post on feed page, so it get new post as soon as new post added
-        context.read<FeedViewModel>().loadPosts();
+        // context.read<FeedViewModel>().loadPosts();
         
         // before I did not add true, this time I added true because at the feed page
         // I use async await to await the result if it true, trigger 

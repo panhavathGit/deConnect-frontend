@@ -48,25 +48,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom != 0;
+
     return Scaffold(
+      resizeToAvoidBottomInset: false, 
       backgroundColor: appTheme.white_A700,
       body: Consumer<AuthViewModel>(
         builder: (context, provider, child) {
           return SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                Expanded(
-                  child: PageView(
-                    controller: _pageController,
-                    physics: const NeverScrollableScrollPhysics(),
-                    onPageChanged: (int page) => setState(() => _currentStep = page),
-                    children: [
-                      _buildStepOne(provider),
-                      _buildStepTwo(provider),
-                    ],
-                  ),
+                Column(
+                  children: [
+                    Expanded(
+                      child: PageView(
+                        controller: _pageController,
+                        physics: const NeverScrollableScrollPhysics(), 
+                        onPageChanged: (int page) => setState(() => _currentStep = page),
+                        children: [
+                          _buildStepOne(provider, isKeyboardVisible),
+                          _buildStepTwo(provider, isKeyboardVisible),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                _buildFooter(),
+                
+                // Footer: Hidden when keyboard is up to keep it clean
+                if (!isKeyboardVisible)
+                  Positioned(
+                    bottom: 20,
+                    left: 0,
+                    right: 0,
+                    child: _buildFooter(),
+                  ),
               ],
             ),
           );
@@ -75,52 +90,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildStepOne(AuthViewModel provider) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 24, left: 18, right: 18),
+  Widget _buildStepOne(AuthViewModel provider, bool isKeyboardVisible) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Form(
         key: _formKeyStepOne,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            const SizedBox(height: 16),
+            _buildHeader(isKeyboardVisible),
             _buildProgressBar(step: 1),
-            const SizedBox(height: 30),
+            SizedBox(height: isKeyboardVisible ? 10 : 30),
             
-            // First Name
-            Text(
-              'First Name',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('First Name'),
             CustomEditText(
               inputType: CustomInputType.text,
               placeholder: 'First name',
               controller: provider.firstNameController,
               validator: (value) => provider.validateName(value, 'First name'),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isKeyboardVisible ? 8 : 16),
             
-            // Last Name
-            Text(
-              'Last Name',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('Last Name'),
             CustomEditText(
               inputType: CustomInputType.text,
               placeholder: 'Last name',
               controller: provider.lastNameController,
               validator: (value) => provider.validateName(value, 'Last name'),
             ),
-            const SizedBox(height: 16),
             
-            // Gender
-            Text(
-              'Gender',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Radio<String>(
@@ -130,7 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   activeColor: appTheme.blue_900,
                 ),
                 const Text('Male'),
-                const SizedBox(width: 20),
+                const SizedBox(width: 10),
                 Radio<String>(
                   value: 'Female',
                   groupValue: provider.selectedGender,
@@ -140,7 +140,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text('Female'),
               ],
             ),
-            const SizedBox(height: 10),
             
             CustomButton(
               text: 'Next',
@@ -148,162 +147,144 @@ class _RegisterScreenState extends State<RegisterScreen> {
               backgroundColor: appTheme.blue_900,
               textColor: appTheme.white_A700,
               borderRadius: 28,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
               onPressed: _nextPage,
             ),
-            const SizedBox(height: 20),
-            
+
+            const SizedBox(height: 16),
             Center(
               child: GestureDetector(
-                onTap: () => provider.onSignInPressed(context),
-                child: Text.rich(
-                  TextSpan(
+                onTap: () {
+                  // --- CLEAR STATE APPROACH ---
+                  // 1. Reset all fields in the ViewModel
+                  provider.resetRegisterFields(); 
+                  // 2. Navigate away
+                  provider.onSignInPressed(context);
+                },
+                child: RichText(
+                  text: TextSpan(
+                    style: TextStyleHelper.instance.title18RegularSourceSerifPro.copyWith(fontSize: 16),
                     children: [
-                      TextSpan(
-                        text: 'Already have an account? ',
-                        style: TextStyleHelper.instance.title18RegularSourceSerifPro,
-                      ),
+                      const TextSpan(text: "Already have an account? ", style: TextStyle(color: Colors.black)),
                       TextSpan(
                         text: 'Sign in',
-                        style: TextStyleHelper.instance.title18RegularSourceSerifPro.copyWith(
-                          color: appTheme.amber_500,
-                        ),
+                        style: TextStyle(color: appTheme.amber_500, fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            
+            const SizedBox(height: 150), 
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStepTwo(AuthViewModel provider) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 24, left: 18, right: 18),
+  Widget _buildStepTwo(AuthViewModel provider, bool isKeyboardVisible) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Form(
         key: _formKeyStepTwo,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            
-            _buildHeader(),
+            const SizedBox(height: 16),
+            _buildHeader(isKeyboardVisible),
             _buildProgressBar(step: 2),
-            const SizedBox(height: 30),
+            SizedBox(height: isKeyboardVisible ? 10 : 20),
             
-            // Username
-            Text(
-              'Username',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('Username'),
             CustomEditText(
               inputType: CustomInputType.text,
               placeholder: 'Username',
               controller: provider.usernameController,
               validator: provider.validateUsername,
-              onChanged: (value) => provider.updateUsernameError(),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isKeyboardVisible ? 6 : 10),
             
-            // Email
-            Text(
-              'Email Address',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('Email Address'),
             CustomEditText(
               inputType: CustomInputType.email,
               placeholder: 'Email',
               controller: provider.registerEmailController,
               validator: provider.validateEmail,
-              onChanged: (value) => provider.updateEmailError(),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isKeyboardVisible ? 6 : 10),
             
-            // Password
-            Text(
-              'Password',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('Password'),
             CustomEditText(
               inputType: CustomInputType.password,
               placeholder: 'Password',
               controller: provider.registerPasswordController,
               validator: provider.validatePassword,
-              onChanged: (value) => provider.updatePasswordError(),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: isKeyboardVisible ? 6 : 10),
             
-            // Confirm Password
-            Text(
-              'Confirm Password',
-              style: TextStyleHelper.instance.title18BoldSourceSerifPro,
-            ),
-            const SizedBox(height: 6),
+            _buildLabel('Confirm Password'),
             CustomEditText(
               inputType: CustomInputType.password,
               placeholder: 'Confirm password',
               controller: provider.confirmPasswordController,
               validator: provider.validateConfirmPassword,
-              onChanged: (value) => provider.updateConfirmPasswordError(),
             ),
-            const SizedBox(height: 30),
             
+            // const Spacer(),
+
             CustomButton(
               text: provider.isLoading ? 'Registering...' : 'Register',
               width: double.infinity,
               backgroundColor: appTheme.blue_900,
               textColor: appTheme.white_A700,
               borderRadius: 28,
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
               onPressed: provider.isLoading
                   ? null
                   : () => provider.onRegisterPressed(context, _formKeyStepTwo),
             ),
-            const SizedBox(height: 20),
-            
+          
             Center(
               child: TextButton(
                 onPressed: _previousPage,
                 child: Text(
-                  'Back',
-                  style: TextStyleHelper.instance.title18RegularSourceSerifPro.copyWith(
-                    color: appTheme.amber_500,
-                    fontSize: 18,
-                  ),
+                  'Back to Previous Step',
+                  style: TextStyle(color: appTheme.amber_500, fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 150),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(label, style: TextStyleHelper.instance.title18BoldSourceSerifPro.copyWith(fontSize: 16)),
+    );
+  }
+
+  Widget _buildHeader(bool isKeyboardVisible) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Register',
-          style: TextStyleHelper.instance.display40RegularSourceSerifPro,
+          style: TextStyleHelper.instance.display40RegularSourceSerifPro.copyWith(
+            fontSize: isKeyboardVisible ? 28 : 36, 
+          ),
         ),
-        const SizedBox(height: 5),
-        Text(
-          'start connecting with DeConnect',
-          style: TextStyleHelper.instance.title18RegularSourceSerifPro,
-        ),
-        const SizedBox(height: 20),
+        if (!isKeyboardVisible) 
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              'start connecting with DeConnect',
+              style: TextStyleHelper.instance.title18RegularSourceSerifPro.copyWith(fontSize: 16),
+            ),
+          ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -311,54 +292,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildProgressBar({required int step}) {
     return Row(
       children: [
-        Expanded(
-          child: Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: appTheme.greenCustom,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
+        Expanded(child: Container(height: 6, decoration: BoxDecoration(color: appTheme.greenCustom, borderRadius: BorderRadius.circular(10)))),
         const SizedBox(width: 10),
-        Expanded(
-          child: Container(
-            height: 8,
-            decoration: BoxDecoration(
-              color: step == 2 ? appTheme.greenCustom : appTheme.blue_gray_100,
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        ),
+        Expanded(child: Container(height: 6, decoration: BoxDecoration(color: step == 2 ? appTheme.greenCustom : appTheme.blue_gray_100, borderRadius: BorderRadius.circular(10)))),
       ],
     );
   }
 
   Widget _buildFooter() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        children: [
-          CustomImageView(
-            imagePath: ImageConstant.img3dIllustration,
-            width: 152,
-            height: 102,
-            fit: BoxFit.cover,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'created by',
-            style: TextStyleHelper.instance.title16RegularSourceSerifPro,
-          ),
-          const SizedBox(height: 8),
-          CustomImageView(
-            imagePath: ImageConstant.imgDelightechLogo,
-            width: 134,
-            height: 44,
-            fit: BoxFit.cover,
-          ),
-        ],
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        CustomImageView(
+          imagePath: ImageConstant.img3dIllustration,
+          width: 100,
+          height: 70,
+          fit: BoxFit.cover,
+        ),
+        const SizedBox(height: 8),
+        Text('created by', style: TextStyleHelper.instance.title16RegularSourceSerifPro.copyWith(fontSize: 14)),
+        const SizedBox(height: 4),
+        CustomImageView(
+          imagePath: ImageConstant.imgDelightechLogo,
+          width: 100,
+          height: 32,
+          fit: BoxFit.cover,
+        ),
+      ],
     );
   }
 }

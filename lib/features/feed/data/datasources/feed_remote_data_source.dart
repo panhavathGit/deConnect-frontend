@@ -4,7 +4,8 @@ import '../models/feed_model.dart';
 import 'dart:io';
 
 abstract class FeedRemoteDataSource {
-  Future<List<FeedPost>> getPosts({String? category});
+  // Future<List<FeedPost>> getPosts({String? category});
+  Future<List<FeedPost>> getPosts({String? category, int offset = 0, int limit = 10});
   Future<FeedPost> getPostById(String id);
   Future<void> createPost(FeedPost post);
   Future<void> updatePost(FeedPost post);
@@ -16,11 +17,82 @@ class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
   final _supabase = SupabaseService.client;
 
   @override
-  Future<List<FeedPost>> getPosts({String? category}) async {
-    try {
-      print('📥 Fetching posts from Supabase...');
+  // Future<List<FeedPost>> getPosts({String? category}) async {
+  //   try {
+  //     print('📥 Fetching posts from Supabase...');
       
-      // Select posts with user profile info using JOIN
+  //     // Select posts with user profile info using JOIN
+  //     var query = _supabase.from('posts').select('''
+  //       *,
+  //       profiles:user_id (
+  //         username,
+  //         avatar_url
+  //       )
+  //     ''');
+      
+  //     // Filter by category if provided (using tags array)
+  //     if (category != null && category != 'All') {
+  //       query = query.contains('tags', [category]);
+  //     }
+      
+  //     final response = await query.order('created_at', ascending: false);
+      
+  //     print('✅ Fetched ${response.length} posts');
+      
+  //     // return (response as List).map((json) {
+  //     //   final profile = json['profiles'];
+        
+  //     //   // Parse tags array
+  //     //   List<String> tags = [];
+  //     //   if (json['tags'] != null) {
+  //     //     tags = List<String>.from(json['tags']);
+  //     //   }
+        
+  //     //   return FeedPost(
+  //     //     id: json['id'],
+  //     //     title: json['title'] ?? 'Untitled Post',
+  //     //     content: json['content'] ?? '',
+  //     //     userId: json['user_id'],
+  //     //     imageUrl: json['image_url'],
+  //     //     authorName: profile?['username'] ?? 'Unknown',
+  //     //     authorAvatar: profile?['avatar_url'],
+  //     //     tags: tags,
+  //     //     createdAt: DateTime.parse(json['created_at']),
+  //     //   );
+  //     // }).toList();
+
+  //      // 1. Use the generated model
+  //     return (response as List).map((json) {
+        
+  //       // --- THE BRIDGE ---
+  //       // We manually move the nested profile data to where the generated code expects it
+  //       final profile = json['profiles'] as Map<String, dynamic>?; // Safe cast
+        
+  //       // We create a mutable map to modify
+  //       final Map<String, dynamic> data = Map.from(json);
+        
+  //       data['author_name'] = profile?['username'] ?? 'Unknown';
+  //       data['author_avatar'] = profile?['avatar_url'];
+  //       // ------------------
+
+  //       // 2. Now let the generated code do the hard work (parsing dates, lists, types)
+  //       return FeedPost.fromJson(data);
+        
+  //     }).toList();
+
+  //   } catch (e) {
+  //     print('❌ Error fetching posts: $e');
+  //     throw Exception('Failed to fetch posts: $e');
+  //   }
+  // }
+
+  Future<List<FeedPost>> getPosts({String? category, int offset = 0, int limit = 10}) async {
+    try {
+      // Calculate the range
+      // e.g., Page 1: 0 to 9. Page 2: 10 to 19.
+      final int from = offset;
+      final int to = offset + limit - 1;
+
       var query = _supabase.from('posts').select('''
         *,
         profiles:user_id (
@@ -29,61 +101,28 @@ class FeedRemoteDataSourceImpl implements FeedRemoteDataSource {
         )
       ''');
       
-      // Filter by category if provided (using tags array)
       if (category != null && category != 'All') {
         query = query.contains('tags', [category]);
       }
       
-      final response = await query.order('created_at', ascending: false);
+      // ADD THE RANGE AND ORDER HERE
+      final response = await query
+          .order('created_at', ascending: false)
+          .range(from, to); // This is the magic line for pagination
       
-      print('✅ Fetched ${response.length} posts');
-      
-      // return (response as List).map((json) {
-      //   final profile = json['profiles'];
-        
-      //   // Parse tags array
-      //   List<String> tags = [];
-      //   if (json['tags'] != null) {
-      //     tags = List<String>.from(json['tags']);
-      //   }
-        
-      //   return FeedPost(
-      //     id: json['id'],
-      //     title: json['title'] ?? 'Untitled Post',
-      //     content: json['content'] ?? '',
-      //     userId: json['user_id'],
-      //     imageUrl: json['image_url'],
-      //     authorName: profile?['username'] ?? 'Unknown',
-      //     authorAvatar: profile?['avatar_url'],
-      //     tags: tags,
-      //     createdAt: DateTime.parse(json['created_at']),
-      //   );
-      // }).toList();
-
-       // 1. Use the generated model
       return (response as List).map((json) {
-        
-        // --- THE BRIDGE ---
-        // We manually move the nested profile data to where the generated code expects it
-        final profile = json['profiles'] as Map<String, dynamic>?; // Safe cast
-        
-        // We create a mutable map to modify
+        final profile = json['profiles'] as Map<String, dynamic>?;
         final Map<String, dynamic> data = Map.from(json);
-        
         data['author_name'] = profile?['username'] ?? 'Unknown';
         data['author_avatar'] = profile?['avatar_url'];
-        // ------------------
 
-        // 2. Now let the generated code do the hard work (parsing dates, lists, types)
         return FeedPost.fromJson(data);
-        
       }).toList();
-
     } catch (e) {
-      print('❌ Error fetching posts: $e');
       throw Exception('Failed to fetch posts: $e');
     }
   }
+
 
   @override
   Future<FeedPost> getPostById(String id) async {

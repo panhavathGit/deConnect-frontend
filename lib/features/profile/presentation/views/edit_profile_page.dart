@@ -156,7 +156,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
         // Reload FeedViewModel to update author info on posts
         final feedViewModel = context.read<FeedViewModel>();
-        await feedViewModel.loadPosts();
+        // await feedViewModel.loadPosts();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

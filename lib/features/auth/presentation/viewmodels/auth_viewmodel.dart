@@ -91,7 +91,7 @@ class AuthViewModel extends ChangeNotifier {
       return passwordError;
     }
     if (value.length < 6) {
-      passwordError = 'Password must be at least 6 characters';
+      passwordError = 'Password must be at least 6 characters (any format)';
       return passwordError;
     }
     passwordError = null;
@@ -149,6 +149,17 @@ class AuthViewModel extends ChangeNotifier {
   void updateConfirmPasswordError() {
     validateConfirmPassword(confirmPasswordController.text);
     notifyListeners();
+  }
+
+  void resetRegisterFields() {
+    firstNameController.clear();
+    lastNameController.clear();
+    usernameController.clear();
+    registerEmailController.clear();
+    registerPasswordController.clear();
+    confirmPasswordController.clear();
+    selectedGender = 'Male'; // Or whatever your default is
+    notifyListeners(); // Refresh UI if necessary
   }
 
   // Login
