@@ -13,6 +13,7 @@ import '../../features/auth/presentation/views/register_screen.dart';
 import '../../features/feed/presentation/views/create_post_page.dart';
 import '../../features/splash/splash_screen.dart';
 import './app_routes.dart';
+import '../../features/chat/presentation/views/chat_room_page.dart'; 
 
 class AppRouter {
 
@@ -156,14 +157,22 @@ class AppRouter {
                 ),
                 routes: [
                   // Future: Add chat room route
-                  // GoRoute(
-                  //   path: 'room/:roomId',
-                  //   name: 'chatRoom',
-                  //   builder: (context, state) {
-                  //     final roomId = state.pathParameters['roomId']!;
-                  //     return ChatRoomPage(roomId: roomId);
-                  //   },
-                  // ),
+
+                  GoRoute(
+                    path: AppPaths.chatRoom,
+                    name: AppRoutes.chatRoom,
+                    builder: (context, state) {
+                      final roomId = state.pathParameters['roomId']!;
+                      // return ChatRoomPage(roomId: roomId);
+                      return ChatRoomPage(
+                        roomId: roomId,
+                        roomName: 'Chat',  // Default name; page can fetch actual name if needed
+                        otherUserId: null,
+                        initialLastSeenText: null,
+                        initialIsOnline: false,
+                      );
+                    },
+                  ),
                 ],
               ),
             ],

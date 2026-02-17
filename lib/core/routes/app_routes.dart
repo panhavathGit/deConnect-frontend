@@ -34,6 +34,9 @@ class AppPaths {
   static const String profile = '/profile';
   static const String chat = '/chat';
   
+  // add this for notification navigation into chat
+  static const String chatRoom = 'room/:roomId';
+  
   // Sub-paths (usually don't start with / in GoRouter sub-routes)
   static const String postDetail = 'post/:id';
   static const String comments = 'comments';
