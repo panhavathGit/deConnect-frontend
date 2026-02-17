@@ -19,8 +19,10 @@ class AppRouter {
   // Development flag
   static const bool _bypassAuth = false;
 
-  static final GoRouter router = GoRouter(
-    
+  static GoRouter getRouter(GlobalKey<NavigatorState> navigatorKey) {
+  
+  return GoRouter(
+    navigatorKey: navigatorKey,
     debugLogDiagnostics: true,
     
     // Initial location
@@ -195,6 +197,7 @@ class AppRouter {
       ),
     ),
   );
+  }
 }
 
 // Scaffold with Bottom Navigation Bar

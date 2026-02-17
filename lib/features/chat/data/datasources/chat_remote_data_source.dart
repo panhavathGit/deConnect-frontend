@@ -122,27 +122,6 @@ Future<List<ChatRoom>> getChatRooms() async {
     final roomId = roomData['id'] as String;
 
     // Get members from map
-    // final members = membersMap[roomId] ?? [];
-    // String? otherUserId;
-    // DateTime? otherUserLastSeen;
-    // bool otherUserIsOnline = false;
-    // String roomName = roomData['name'] ?? 'Chat';
-    // String? roomAvatar;
-
-    // if (roomData['is_group'] == false && members.isNotEmpty) {
-    //   final otherUser = members.first;
-    //   otherUserId = otherUser['user_id'];
-    //   if (otherUser['profiles'] != null) {
-    //     roomName = otherUser['profiles']['username'] ?? 'User';
-    //     roomAvatar = otherUser['profiles']['avatar_url'];
-    //     if (otherUser['profiles']['last_seen'] != null) {
-    //       otherUserLastSeen = DateTime.parse(otherUser['profiles']['last_seen']);
-    //     }
-    //     otherUserIsOnline = otherUser['profiles']['is_online'] ?? false;
-    //   }
-    // }
-
-        // Get members from map
     final members = membersMap[roomId] ?? [];
     String? otherUserId;
     DateTime? otherUserLastSeen;
@@ -601,81 +580,6 @@ Future<List<ChatRoom>> getChatRooms() async {
       return [];
     }
   }
-
-  // // ============================================================
-  // // PRESENCE / LAST SEEN
-  // // ============================================================
-  // @override
-  // Future<void> updateMyPresence() async {
-  //   try {
-  //     await _supabase
-  //         .from('profiles')
-  //         .update({
-  //           'last_seen': DateTime.now().toIso8601String(),
-  //           'is_online': true,
-  //         })
-  //         .eq('id', _currentUserId);
-  //   } catch (e) {
-  //     debugPrint('❌ Error updating presence: $e');
-  //   }
-  // }
-
-  // @override
-  // Stream<Map<String, dynamic>> streamUserPresence(String userId) {
-  //   debugPrint('👂 Streaming presence for user: $userId');
-  //   final controller = StreamController<Map<String, dynamic>>();
-
-  //   // Initial fetch
-  //   _fetchUserPresence(userId).then((data) {
-  //     if (!controller.isClosed && data != null) {
-  //       controller.add(data);
-  //     }
-  //   });
-
-  //   // Subscribe to changes
-  //   final channel = _supabase
-  //       .channel('presence:$userId')
-  //       .onPostgresChanges(
-  //         event: PostgresChangeEvent.update,
-  //         schema: 'public',
-  //         table: 'profiles',
-  //         filter: PostgresChangeFilter(
-  //           type: PostgresChangeFilterType.eq,
-  //           column: 'id',
-  //           value: userId,
-  //         ),
-  //         callback: (payload) {
-  //           debugPrint('👤 Presence change for $userId');
-  //           if (!controller.isClosed) {
-  //             controller.add({
-  //               'last_seen': payload.newRecord['last_seen'],
-  //               'is_online': payload.newRecord['is_online'],
-  //             });
-  //           }
-  //         },
-  //       )
-  //       .subscribe();
-
-  //   controller.onCancel = () {
-  //     channel.unsubscribe();
-  //   };
-
-  //   return controller.stream;
-  // }
-
-  // Future<Map<String, dynamic>?> _fetchUserPresence(String userId) async {
-  //   try {
-  //     final response = await _supabase
-  //         .from('profiles')
-  //         .select('last_seen, is_online')
-  //         .eq('id', userId)
-  //         .maybeSingle();
-  //     return response;
-  //   } catch (e) {
-  //     debugPrint('❌ Error getting presence: $e');
-  //     return null;
-  //   }
-  // }
 
   // ============================================================
   // GROUP CHAT METHODS

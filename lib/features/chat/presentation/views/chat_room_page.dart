@@ -5,6 +5,7 @@ import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import '../../chat.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class ChatRoomPage extends StatefulWidget {
   final String roomId;
@@ -38,43 +39,199 @@ class _ChatRoomPageState extends State<ChatRoomPage> {
       !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
   bool get _isMobile => !kIsWeb && (Platform.isIOS || Platform.isAndroid);
 
-  @override
-  void initState() {
-    super.initState();
-    _filePickerService = FilePickerService();
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _filePickerService = FilePickerService();
     
-    final chatRepository = context.read<ChatListViewModel>().repository;
-    _viewModel = ChatRoomViewModel(
-      repository: chatRepository,
-      roomId: widget.roomId,
-      otherUserId: widget.otherUserId,
-      initialLastSeenText: widget.initialLastSeenText,
-      initialIsOnline: widget.initialIsOnline,
-    );
+  //   final chatRepository = context.read<ChatListViewModel>().repository;
+  //   _viewModel = ChatRoomViewModel(
+  //     repository: chatRepository,
+  //     roomId: widget.roomId,
+  //     otherUserId: widget.otherUserId,
+  //     initialLastSeenText: widget.initialLastSeenText,
+  //     initialIsOnline: widget.initialIsOnline,
+  //   );
 
-    _messageController.addListener(_onTextChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_initialized) {
-        _initialized = true;
-        _viewModel.loadMessages();
-      }
-    });
-  }
+  //   _messageController.addListener(_onTextChanged);
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     if (!_initialized) {
+  //       _initialized = true;
+  //       _viewModel.loadMessages();
+  //     }
+  //   });
+  // }
 
-  void _onTextChanged() {
-    if (_messageController.text.isNotEmpty) {
-      _viewModel.onTyping();
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _filePickerService = FilePickerService();
+
+  //   final chatRepository = context.read<ChatListViewModel>().repository;
+  //   _viewModel = ChatRoomViewModel(
+  //     repository: chatRepository,
+  //     roomId: widget.roomId,
+  //     otherUserId: widget.otherUserId,
+  //     initialLastSeenText: widget.initialLastSeenText,
+  //     initialIsOnline: widget.initialIsOnline,
+  //   );
+
+  //   // Update current room for notification filtering
+  //   _setCurrentRoom(widget.roomId);
+
+  //   _messageController.addListener(_onTextChanged);
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     if (!_initialized) {
+  //       _initialized = true;
+  //       _viewModel.loadMessages();
+  //     }
+  //   });
+  // }
+
+//   @override
+// void initState() {
+//   super.initState();
+//   _filePickerService = FilePickerService();
+
+//   final chatRepository = context.read<ChatListViewModel>().repository;
+//   _viewModel = ChatRoomViewModel(
+//     repository: chatRepository,
+//     roomId: widget.roomId,
+//     otherUserId: widget.otherUserId,
+//     initialLastSeenText: widget.initialLastSeenText,
+//     initialIsOnline: widget.initialIsOnline,
+//   );
+
+//   // ✅ Update current room after first frame
+//   WidgetsBinding.instance.addPostFrameCallback((_) async {
+//     await _setCurrentRoom(widget.roomId); // set current room in DB
+//   });
+
+//   _messageController.addListener(_onTextChanged);
+
+//   // Load messages after first frame
+//   WidgetsBinding.instance.addPostFrameCallback((_) {
+//     if (!_initialized) {
+//       _initialized = true;
+//       _viewModel.loadMessages();
+//     }
+//   });
+// }
+
+@override
+void initState() {
+  super.initState();
+
+  _filePickerService = FilePickerService();
+
+  final chatRepository = context.read<ChatListViewModel>().repository;
+
+  _viewModel = ChatRoomViewModel(
+    repository: chatRepository,
+    roomId: widget.roomId,
+    otherUserId: widget.otherUserId,
+  );
+
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await _setCurrentRoom(widget.roomId);
+
+    if (!_initialized) {
+      _initialized = true;
+      await _viewModel.loadMessages();
     }
-  }
+  });
 
-  @override
-  void dispose() {
-    _messageController.removeListener(_onTextChanged);
-    _messageController.dispose();
-    _scrollController.dispose();
-    _viewModel.dispose();
-    super.dispose();
+  _messageController.addListener(_onTextChanged);
+}
+
+
+
+
+@override
+void dispose() {
+  _messageController.removeListener(_onTextChanged);
+  _messageController.dispose();
+  _scrollController.dispose();
+
+  // ✅ Clear current room when leaving
+  WidgetsBinding.instance.addPostFrameCallback((_) async {
+    await _setCurrentRoom(null);
+  });
+
+  _viewModel.dispose();
+  super.dispose();
+}
+
+  //   @override
+  // void dispose() {
+  //   _messageController.removeListener(_onTextChanged);
+  //   _messageController.dispose();
+  //   _scrollController.dispose();
+
+  //   // Clear current room
+  //   _setCurrentRoom(null);
+
+  //   _viewModel.dispose();
+  //   super.dispose();
+  // }
+
+  // Future<void> _setCurrentRoom(String? roomId) async {
+  //   try {
+  //     await SupabaseService.client
+  //         .from('users')
+  //         .update({'current_room_id': roomId})
+  //         .eq('id', _viewModel.currentUserId);
+  //   } catch (e) {
+  //     debugPrint('Failed to update current room: $e');
+  //   }
+  // }
+
+  // void _onTextChanged() {
+  //   if (_messageController.text.isNotEmpty) {
+  //     _viewModel.onTyping();
+  //   }
+  // }
+
+
+/// Update current_room_id in Supabase for the current user
+
+Future<void> _setCurrentRoom(String? roomId) async {
+  try {
+    if (_viewModel.currentUserId == null) return;
+
+    final token = await FirebaseMessaging.instance.getToken();
+    if (token == null) return;
+
+    final response = await SupabaseService.client
+        .from('user_devices')  // ✅ Correct table
+        .update({'current_room_id': roomId})
+        .eq('user_id', _viewModel.currentUserId)
+        .eq('fcm_token', token);  // ✅ Update only current device
+
+    if (response.error != null) {
+      debugPrint('Failed to update current room: ${response.error!.message}');
+    } else {
+      debugPrint('current_room_id updated to: $roomId for device $token');
+    }
+  } catch (e) {
+    debugPrint('Exception updating current room: $e');
   }
+}
+
+void _onTextChanged() {
+  if (_messageController.text.isNotEmpty) {
+    _viewModel.onTyping();
+  }
+}
+
+  // @override
+  // void dispose() {
+  //   _messageController.removeListener(_onTextChanged);
+  //   _messageController.dispose();
+  //   _scrollController.dispose();
+  //   _viewModel.dispose();
+  //   super.dispose();
+  // }
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {

@@ -28,6 +28,8 @@ class FeedPost {
   
   final List<String> tags;
   
+  // fallback
+  
   @JsonKey(name: 'created_at', includeToJson: false)
   final DateTime createdAt;
 

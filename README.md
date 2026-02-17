@@ -67,9 +67,9 @@ flutter build apk --flavor prod -t lib/main_prod.dart
 
 Each flavor has:
 - **Different package name** (via applicationIdSuffix)
-  - Dev: `com.example.onboarding_project.dev`
-  - Staging: `com.example.onboarding_project.stg`
-  - Production: `com.example.onboarding_project`
+  - Dev: `com.dlt.deconnect.dev`
+  - Staging: `com.dlt.deconnect.stg`
+  - Production: `com.dlt.deconnect`
 - **Different app name**
   - Dev: "App Dev"
   - Staging: "App Staging"

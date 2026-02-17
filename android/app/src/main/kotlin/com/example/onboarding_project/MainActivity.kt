@@ -1,4 +1,4 @@
-package com.example.onboarding_project
+package com.dlt.deconnect
 
 import io.flutter.embedding.android.FlutterActivity
 
