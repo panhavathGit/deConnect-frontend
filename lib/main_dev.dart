@@ -6,6 +6,7 @@ import 'core/services/notification_service.dart';
 import 'core/app_export.dart';
 import './features/feature.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:onboarding_project/core/utils/logger.dart';
 
 /// Background handler (must be top-level)
 @pragma('vm:entry-point')
@@ -13,7 +14,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  debugPrint('🔔 [Background] message received: ${message.messageId}');
+  AppLogger.d('[Background] message received: ${message.messageId}');
 }
 
 /// Global navigator key
@@ -94,7 +95,7 @@ class _MyAppState extends State<MyApp> {
     /// Request notification permission for Android 13+
     if (await Permission.notification.isDenied) {
       final status = await Permission.notification.request();
-      debugPrint('Notification permission status: $status');
+      AppLogger.w('Notification permission status: $status');
     }
 
     /// Initialize NotificationService

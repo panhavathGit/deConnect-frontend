@@ -1,5 +1,6 @@
 // lib/features/feed/presentation/viewmodels/user_info_viewmodel.dart
 import 'package:flutter/material.dart';
+import 'package:onboarding_project/core/utils/logger.dart';
 import '../../../../core/services/supabase_service.dart';
 
 class UserInfoViewModel extends ChangeNotifier {
@@ -32,10 +33,10 @@ class UserInfoViewModel extends ChangeNotifier {
         _userName = profile['first_name'] ?? profile['username'] ?? 'User';
         _avatarUrl = profile['avatar_url'];
         
-        print('✅ User info loaded: $_userName');
+        AppLogger.i('User info loaded: $_userName');
       }
     } catch (e) {
-      print('❌ Error loading user info: $e');
+      AppLogger.e(' Error loading user info: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -14,7 +14,6 @@ Each environment has its own `.env` file:
 - `.env.staging` - Staging environment
 - `.env.prod` - Production environment
 
-
 #### Using Command Line
 
 **Development:**

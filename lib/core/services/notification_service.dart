@@ -6,10 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:onboarding_project/core/routes/app_routes.dart';
 import 'package:onboarding_project/core/services/supabase_service.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:onboarding_project/core/utils/logger.dart';
 
 /// Background handler (top-level)
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  debugPrint('[Background] message: ${message.messageId}');
+  AppLogger.d('[Background] message: ${message.messageId}');
   await Firebase.initializeApp();
 }
 
@@ -43,26 +44,26 @@ class NotificationService {
         _handleNotificationTap(response.payload);
       },
     );
-    debugPrint('✅ Local notifications initialized');
+    AppLogger.i('Local notifications initialized');
   }
 
   Future<void> _requestPermissions() async {
     await _firebaseMessaging.requestPermission(alert: true, badge: true, sound: true);
-    debugPrint('✅ FCM permissions requested');
+    AppLogger.i('FCM permissions requested');
   }
 
   Future<void> _setupTokenHandling() async {
     try {
-      debugPrint('🔍 Attempting to get FCM token...');
+      AppLogger.d('Attempting to get FCM token...');
       final token = await _firebaseMessaging.getToken();
-      debugPrint('📱 FCM Token: $token');
+      AppLogger.d('FCM Token: $token');
       await _saveTokenToDatabase(token);
     } catch (e) {
-      debugPrint('❌ Error getting FCM token: $e');
+      AppLogger.e('Error getting FCM token: $e');
     }
 
     _firebaseMessaging.onTokenRefresh.listen((newToken) {
-      debugPrint('🔄 Token refreshed: $newToken');
+      AppLogger.w(' Token refreshed: $newToken');
       _saveTokenToDatabase(newToken);
     });
   }
@@ -80,23 +81,23 @@ class NotificationService {
         'push_enabled': true,
         'last_active_at': DateTime.now().toIso8601String(),
       }, onConflict: 'user_id,fcm_token');
-      debugPrint('✅ Token saved to Supabase');
+      AppLogger.d('Token saved to Supabase');
     } catch (e) {
-      debugPrint('❌ Error saving token: $e');
+      AppLogger.e('Error saving token: $e');
     }
   }
 
   void _setupMessageHandlers() {
     // Foreground
     FirebaseMessaging.onMessage.listen((message) {
-      debugPrint('⚡ [Foreground] message: ${message.notification?.title}');
-      debugPrint('⚡ [Foreground] data: ${message.data}');
+      AppLogger.d(' [Foreground] message: ${message.notification?.title}');
+      AppLogger.d(' [Foreground] data: ${message.data}');
       _showLocalNotification(message);
     });
 
     // Opened from background
     FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      debugPrint('⚡ [OpenedApp] message tapped: ${message.notification?.title}');
+      AppLogger.d(' [OpenedApp] message tapped: ${message.notification?.title}');
       _handleNotificationTap(message.data['room_id']?.toString());
     });
   }
@@ -122,7 +123,7 @@ class NotificationService {
       payload: message.data['room_id']?.toString(),
     );
 
-    debugPrint('Local notification displayed: ${message.notification?.title}');
+    AppLogger.i('Local notification displayed: ${message.notification?.title}');
   }
 
   // only go to chat screen
@@ -134,17 +135,17 @@ class NotificationService {
   //     AppRoutes.chat,
   //     extra: {'roomId': roomId},
   //   );
-  //   debugPrint('🟢 Navigated to room: $roomId');
+  //   AppLogger.i('Navigated to room: $roomId');
   // }
 
   // directly go to specific chat room
   void _handleNotificationTap(String? roomId) {
     if (roomId == null || _navigatorKey?.currentContext == null) {
-      debugPrint('⚠️ Notification tap ignored, roomId is null or context missing');
+      AppLogger.w('Notification tap ignored, roomId is null or context missing');
       return;
     }
 
-    debugPrint('Navigating to chat room: $roomId');
+    AppLogger.i('Navigating to chat room: $roomId');
     _navigatorKey!.currentContext!.goNamed(
       AppRoutes.chatRoom,  // Changed from AppRoutes.chat
       pathParameters: {'roomId': roomId},  // Use pathParameters instead of extra
