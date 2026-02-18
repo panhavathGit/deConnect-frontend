@@ -4,6 +4,12 @@
 .env.staging
 .env.prod
 
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+*.service-account.json
+
+
 # Miscellaneous
 *.class
 *.log
