@@ -1,12 +1,11 @@
-# onboarding_project
+# DeConnect APP
 
-A new Flutter project.
+#### How to run?
+1. Set up env : using the template from .env.example and replace it with the real credential (contact the project owner for the credential)
 
-## Getting Started
+2. Package Installation : flutter pub get
 
-### Environment Setup
-
-This project uses Flutter flavors to manage different environments (Development, Staging, Production).
+3. Final run : flutter build apk --flavor dev -t lib/main_dev.dart
 
 #### Environment Files
 
@@ -15,19 +14,6 @@ Each environment has its own `.env` file:
 - `.env.staging` - Staging environment
 - `.env.prod` - Production environment
 
-**Important**: These files are gitignored. Use `.env.example` as a template to create your own environment files.
-
-### Running the App
-
-#### Using VS Code
-
-Launch configurations are already set up in `.vscode/launch.json`:
-1. Open the Run and Debug panel (Cmd+Shift+D)
-2. Select the desired configuration:
-   - **Launch Dev** - Runs the dev flavor
-   - **Launch Staging** - Runs the staging flavor
-   - **Launch Prod** - Runs the prod flavor
-3. Click the play button or press F5
 
 #### Using Command Line
 
@@ -76,6 +62,7 @@ Each flavor has:
   - Production: "My App"
 - **Different environment variables** (loaded from respective .env files)
 - **Debug banner** (shown in dev and staging, hidden in production)
+
 ### App Icons (Android)
 
 Each flavor has its own app icon configured and generated from:
@@ -99,16 +86,4 @@ android/app/src/
 dart run flutter_launcher_icons -f flutter_launcher_icons-dev.yaml
 dart run flutter_launcher_icons -f flutter_launcher_icons-staging.yaml
 dart run flutter_launcher_icons -f flutter_launcher_icons-prod.yaml
-```
-
-**Configuration files:**
-- [flutter_launcher_icons-dev.yaml](flutter_launcher_icons-dev.yaml)
-- [flutter_launcher_icons-staging.yaml](flutter_launcher_icons-staging.yaml)
-- [flutter_launcher_icons-prod.yaml](flutter_launcher_icons-prod.yaml)
-### Adding Environment Variables
-
-1. Add the variable to all `.env.*` files
-2. Add a getter in `lib/core/config/env_config.dart`:
-```dart
-static String get myNewVariable => dotenv.env['MY_NEW_VARIABLE'] ?? '';
 ```
