@@ -39,7 +39,7 @@ android {
         create("dev") {
             dimension = "version"
             applicationIdSuffix = ".dev"
-            resValue("string", "app_name", "App Dev")
+            resValue("string", "app_name", "DeConnect Dev")
         }
         create("staging") {
             dimension = "version"
