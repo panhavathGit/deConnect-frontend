@@ -196,12 +196,12 @@ class AuthViewModel extends ChangeNotifier {
         isSuccess = true;
 
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Login successful!'),
-              backgroundColor: appTheme.greenCustom,
-            ),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text('Login successful!'),
+          //     backgroundColor: appTheme.greenCustom,
+          //   ),
+          // );
 
           emailController.clear();
           passwordController.clear();

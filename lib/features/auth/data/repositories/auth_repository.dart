@@ -1,4 +1,5 @@
 // lib/features/auth/data/repositories/auth_repository.dart
+import 'package:onboarding_project/core/utils/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/services/supabase_service.dart';
 
@@ -7,17 +8,18 @@ class AuthRepository {
 
   Future<AuthResponse> login(String email, String password) async {
     try {
-      print('🔐 Attempting login for: $email');
+      AppLogger.i('Attempting login for: $email');
       final response = await _supabase.auth.signInWithPassword(
         email: email, 
         password: password
       );
-      print('✅ Login successful: ${response.user?.email}');
-      print('📝 User ID: ${response.user?.id}');
-      print('📊 User metadata: ${response.user?.userMetadata}');
+      AppLogger.i('Login successful: ${response.user?.email}');
+      AppLogger.d('User ID: ${response.user?.id}');
+      AppLogger.d('User metadata: ${response.user?.userMetadata}');
+
       return response;
-    } catch (e) {
-      print('❌ Login error: $e');
+    } catch (e, stackTrace) {
+      AppLogger.e('Login failed for $email', e, stackTrace);
       rethrow;
     }
   }
@@ -30,13 +32,14 @@ class AuthRepository {
     String? lastName,
     String? gender,
   }) async {
+    final startTime = DateTime.now();
+    AppLogger.i('   Starting registration for: $email');
+    AppLogger.d('   Username: $username');
+    AppLogger.d('   First Name: $firstName');
+    AppLogger.d('   Last Name: $lastName');
+    AppLogger.d('   Gender: $gender');
+
     try {
-      print('📝 Registering user: $email');
-      print('   Username: $username');
-      print('   First Name: $firstName');
-      print('   Last Name: $lastName');
-      print('   Gender: $gender');
-      
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
@@ -47,24 +50,45 @@ class AuthRepository {
           'gender': gender,
         },
       );
-      
-      print('✅ Registration successful!');
+
+      final duration = DateTime.now().difference(startTime);
+      AppLogger.i('Registration successful for: ${response.user?.email}');
+      AppLogger.d('New user ID: ${response.user?.id}');
+      AppLogger.d('Registration took: ${duration.inMilliseconds}ms');
+
       return response;
-    } catch (e) {
-      print('❌ Registration error: $e');
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      AppLogger.e('❌ Registration failed for $email after ${duration.inMilliseconds}ms', e, stackTrace);
       rethrow;
     }
   }
   
   Future<void> logout() async {
-    print('🚪 Logging out...');
-    await _supabase.auth.signOut();
-    print('✅ Logout successful');
+    final startTime = DateTime.now();
+    final currentUserEmail = _supabase.auth.currentUser?.email ?? 'unknown user';
+    AppLogger.i('Starting logout for: $currentUserEmail');
+
+    try {
+      await _supabase.auth.signOut();
+
+      final duration = DateTime.now().difference(startTime);
+      AppLogger.i('Logout successful for: $currentUserEmail');
+      AppLogger.d('Logout operation took: ${duration.inMilliseconds}ms');
+    } catch (e, stackTrace) {
+      final duration = DateTime.now().difference(startTime);
+      AppLogger.e('❌ Logout failed for $currentUserEmail after ${duration.inMilliseconds}ms', e, stackTrace);
+      rethrow;
+    }
   }
   
   User? get currentUser {
     final user = _supabase.auth.currentUser;
-    print('👤 Current user: ${user?.email ?? "No user logged in"}');
+    if (user != null) {
+      AppLogger.d('👤 Current user: ${user.email} (ID: ${user.id})');
+    } else {
+      AppLogger.d('👤 No user currently logged in');
+    }
     return user;
   }
 }
