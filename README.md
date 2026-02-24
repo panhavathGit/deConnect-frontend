@@ -1,5 +1,7 @@
 # DeConnect APP
 
+Lastest working branch is #refactor/logger
+
 #### How to run?
 1. Set up env : using the template from .env.example and replace it with the real credential (contact the project owner for the credential)
 
